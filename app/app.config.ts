@@ -15,7 +15,7 @@ export default defineAppConfig({
     { id: 'services', label: 'What we do', icon: 'blueprint' },
     { id: 'lab', label: 'Theme lab', icon: 'theme' },
     { id: 'shelf', label: 'Components', icon: 'system' },
-    { id: 'process', label: 'Process', icon: 'ascend' },
+    { id: 'process', label: 'Process', icon: 'growth' },
     { id: 'principles', label: 'Principles', icon: 'compass' },
   ],
 })

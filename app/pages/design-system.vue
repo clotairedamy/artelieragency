@@ -64,7 +64,7 @@ const motionScale = [
 ]
 
 const glyphs = [
-  'mark', 'dashboard', 'discovery', 'blueprint', 'system', 'signal', 'gauge', 'ascend',
+  'dashboard', 'signal', 'growth', 'gauge', 'discovery', 'blueprint', 'system',
   'prototype', 'access', 'handoff', 'engine', 'theme', 'audit', 'table',
 ]
 
@@ -291,7 +291,7 @@ const checklist = [
 
             <div id="f-icons" class="found card wide">
               <h3 class="found-name">Iconography</h3>
-              <p class="body">A 24px grid, a 1.5 stroke, round caps. Every Artelier glyph borrows from the mark — the A's legs, which rise two for every one across, or the framed window with a sidebar that the A becomes as you scroll.</p>
+              <p class="body">A 24px grid, a 1.6 stroke, round caps. Two tones: the frame or track recedes, the thing the glyph is about sits at full strength. Frames take the interface's rounded corners, and a solid dot marks the value.</p>
               <ul class="glyph-grid">
                 <li v-for="g in glyphs" :key="g">
                   <span class="glyph-tile"><Icon :name="g" :size="22" /></span>

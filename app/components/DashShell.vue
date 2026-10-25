@@ -69,8 +69,7 @@ onMounted(() => {
     onBeforeUnmount(() => spy.disconnect())
   }
 
-  // The rail advertises ⌘K, so ⌘K has to work. A shortcut printed on a
-  // button that does nothing is what this studio is selling against.
+  // ⌘K starts a project from anywhere, the way it would in the app.
   const router = useRouter()
   const onKey = (e: KeyboardEvent) => {
     if (e.key.toLowerCase() !== 'k' || !(e.metaKey || e.ctrlKey)) return
@@ -97,7 +96,7 @@ function toggle() {
          the one action move to a bar across the top. -->
     <header class="topbar">
       <NuxtLink to="/" class="brand">
-        <BrandMark :size="26" morph />
+        <BrandMark :size="26" />
         <span class="wordmark">{{ studio.name }}</span>
       </NuxtLink>
       <div class="topbar-actions">
@@ -110,14 +109,8 @@ function toggle() {
 
     <aside class="rail">
       <NuxtLink to="/" class="rail-brand" :aria-label="studio.name">
-        <BrandMark class="mark" :size="collapsed ? 40 : 78" morph />
+        <BrandMark class="mark" :size="collapsed ? 40 : 78" />
         <span class="wordmark num">{{ studio.name }}</span>
-      </NuxtLink>
-
-      <NuxtLink class="btn btn-accent rail-cta" to="/contact">
-        <Icon name="plus" :size="20" />
-        <span class="label">Start a project</span>
-        <span class="label shortcut num">⌘K</span>
       </NuxtLink>
 
       <hr v-if="nav.length" class="rule">
@@ -229,24 +222,6 @@ function toggle() {
     color: var(--subdued);
   }
 
-  /* The one filled control in the rail, and the first thing the eye lands
-     on — sized like the app's primary action, not like a link. */
-  .rail-cta {
-    margin: 0 20px;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 15px 14px;
-    font-size: 0.97rem;
-    font-weight: 520;
-    border-radius: 16px;
-  }
-
-  .shortcut {
-    margin-left: auto;
-    font-size: 0.73rem;
-    opacity: 0.5;
-  }
-
   .rule {
     height: 1px;
     margin: -4px 20px;
@@ -278,16 +253,6 @@ function toggle() {
 
   .collapsed .collapse-tile {
     transform: rotate(180deg);
-  }
-
-  /* The action shrinks to the tile column rather than keeping the padding and
-     gaps it needs when it has a label — otherwise it is wider than the rail
-     it sits in. */
-  .collapsed .rail-cta {
-    width: 48px;
-    padding: 14px 0;
-    gap: 0;
-    justify-content: center;
   }
 
 }

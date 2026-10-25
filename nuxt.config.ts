@@ -32,7 +32,7 @@ export default defineNuxtConfig({
       ],
       // Lets CSS hide not-yet-revealed sections only when JS will reveal them.
       script: [{ innerHTML: "document.documentElement.classList.add('js')" }],
-      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/brand/mark.svg' }],
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/brand/app-icon.svg' }],
     },
   },
 
