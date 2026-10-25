@@ -1,0 +1,15 @@
+[package]
+name = "artelier-engine"
+version = "0.1.0"
+edition = "2021"
+description = "The compute behind the ADS dashboard example. Compiled to WebAssembly."
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+panic = "abort"
+codegen-units = 1
+strip = true

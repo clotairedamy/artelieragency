@@ -1,0 +1,641 @@
+/*
+  Artelier — the studio design system.
+
+  Monochrome soft UI, ported from the CrawlStat desktop app's theme
+  (app/lib/src/theme/soft.dart). Nothing has a border. Shape comes entirely
+  from two shadows — a light one up and to the left, a dark one down and to
+  the right — on a surface the same colour as what is behind it. That reads as
+  a shape extruded from the page, or pressed into it. Flip the two shadows and
+  a button becomes a hole. That is the whole trick.
+
+  Taking the hue out does not weaken the style, it concentrates it: soft UI
+  already works entirely in luminance. Two rules hold the monochrome version
+  together.
+
+  1. White is the accent. The brightest value on screen is reserved for the one
+     thing we want clicked. Everything else lives in a narrow charcoal band.
+  2. Depth is the only decoration. No colour, no illustration, no gradient
+     beyond the shadow pair. Hierarchy is elevation and value alone.
+
+  ## The honest caveat
+
+  Soft UI has a real accessibility problem and it would be poor form for a
+  studio that sells interface work to pretend otherwise: with no borders and a
+  surface matching its background, the edges of controls are implied by shadow
+  alone. So this implementation bends the style where it has to — text and
+  icons keep full contrast against their surface, the softness is in the
+  container and never in the content, and every interactive thing gets a
+  visible white ring on hover and focus so a keyboard user can always see
+  where they are.
+*/
+
+:root {
+  /* Surfaces, darkest to lightest. Neumorphism needs a mid-tone to have room
+     for a lighter *and* a darker shadow; pure black leaves nowhere to go
+     downward, which is why the canvas stops at #131315. */
+  --canvas: #131315;
+  --rail: #171719;
+  --surface: #1e1e22;
+  --raised: #26262a;
+  --elevated: #2e2e33;
+  --hover: #303036;
+
+  /* Nearly invisible: rows are separated by a whisper, not a rule. */
+  --line: #2c2c31;
+  --line-strong: #3a3a41;
+
+  /* The two lights. On a near-black page a translucent shadow simply
+     disappears and the surface flattens back into the background, so the
+     shade is nearly opaque. */
+  --shade: rgb(0 0 0 / 0.8);
+  --shade-soft: rgb(0 0 0 / 0.6);
+  --highlight: rgb(255 255 255 / 0.07);
+
+  --text: #f3f3f5;
+  --text-soft: #c8c8ce;
+  --subdued: #8b8b93; /* 4.6:1 on --surface — AA for body text */
+
+  --accent: #ffffff;
+  --accent-ink: #15151a; /* text on an accent fill */
+
+  /* ─── Brand & semantic ──────────────────────────────────────────────
+     Pigment names, because they were chosen the way an atelier chooses
+     pigments: for what they are, not for what is fashionable.
+
+     Where they may appear: the mark, identity moments, and state. Never
+     as a chrome fill. The whole system is grey so that colour means
+     something when it finally shows up — spend it on a toolbar and the
+     one red row that matters stops being visible.
+
+     Every value below was computed in OKLCH and checked three ways:
+     4.5:1 against its own surface, >=15 dE from every other role
+     (>=12 among the semantics, which always carry a glyph as well), and
+     >=8.7 dE from 45 well-known software brand colours. The semantic
+     three sit deliberately close to the conventional green/amber/red —
+     a success colour nobody recognises is a failed success colour. */
+  --brand-primary: #b66dcc;    /* Tyrian    · oklch .66 .13 318 */
+  --brand-secondary: #2b96a4;  /* Verdigris · oklch .62 .09 208 */
+  --ok: #7bc062;               /* Celadon   · oklch .71 .14 138 */
+  --warn: #d88c00;             /* Orpiment  · oklch .70 .15  74 */
+  --bad: #e55458;              /* Vermilion · oklch .62 .19  22 */
+
+  --accent-glow: 0 0 28px rgb(255 255 255 / 0.14);
+
+  /* Luminance steps stand in for severity. Monochrome has no red, so weight
+     carries the meaning: the worse it is, the brighter it is. */
+  --grade-4: #f3f3f5;
+  --grade-3: #b9b9c1;
+  --grade-2: #86868e;
+  --grade-1: #5c5c64;
+
+  /* Shadow pairs, scaled from Soft.raised: an 8px offset and a 28px blur at
+     depth 1. Two darks rather than one — a tight contact shadow right under
+     the edge, which is what reads as thickness, and a wide soft fall that
+     seats the shape on the page. A single blur gives you one or the other and
+     the result looks printed on. */
+  --soft-raised:
+    3.6px 4.8px 8.4px var(--shade),
+    8px 8px 28px var(--shade-soft),
+    -5.2px -5.2px 21px var(--highlight);
+  --soft-raised-sm:
+    1.8px 2.4px 4.2px var(--shade),
+    4px 4px 14px var(--shade-soft),
+    -2.6px -2.6px 11px var(--highlight);
+  --soft-raised-lg:
+    5.8px 7.7px 13.4px var(--shade),
+    13px 13px 45px var(--shade-soft),
+    -8.3px -8.3px 34px var(--highlight);
+  --soft-inset:
+    inset 3.2px 3.2px 8px var(--shade),
+    inset -3.2px -3.2px 8px var(--highlight);
+  --soft-inset-sm:
+    inset 2px 2px 5px var(--shade),
+    inset -2px -2px 5px var(--highlight);
+
+  /* Radius. Large on purpose: soft UI reads as moulded rather than drawn, and
+     a tight 8pt corner immediately looks like a stock dashboard again. The
+     radius is doing as much work here as the shadows are. */
+  --radius: 20px;
+  --radius-lg: 26px;
+  --radius-sm: 13px;
+  --pill: 999px;
+
+  /* Space between the window edge and the cards, and between cards. Every
+     screen uses it, which is what keeps their edges lined up. */
+  --gutter: 24px;
+  --rail-w: 232px;
+  --rail-w-collapsed: 88px;
+  --row-h: 34px;
+
+  /* Four families, each with a job.
+     Display — Bricolage Grotesque, a variable face with an optical-size axis,
+       so a 64px headline gets tighter apertures than a 20px one without a
+       second font file. It carries the personality.
+     UI      — Inter Tight, which stays legible at 13px in a dense grid. The
+       display face would not.
+     Label   — Martian Mono, for eyebrows and component ids. Its width axis
+       makes letterspaced small caps hold together instead of falling apart.
+     Data    — JetBrains Mono, for anything in a column. Drawn for figures. */
+  --font-display: 'Bricolage Grotesque Variable', 'Inter Tight Variable', ui-sans-serif, system-ui, sans-serif;
+  --font: 'Inter Tight Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-label: 'Martian Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  --mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --max: 1080px;
+}
+
+/* The light theme. Its shade cannot be black or the whole page reads as
+   dirty — it is the blue-grey a real object casts onto paper. */
+:root[data-theme='light'] {
+  --canvas: #e2e2e6;
+  --rail: #e7e7eb;
+  --surface: #ececef;
+  --raised: #f3f3f6;
+  --elevated: #f7f7fa;
+  --hover: #e9e9ee;
+
+  --line: #dbdbe1;
+  --line-strong: #c8c8d2;
+
+  --shade: rgb(163 174 198 / 0.6);
+  --shade-soft: rgb(163 174 198 / 0.42);
+  --highlight: #ffffff;
+
+  --text: #1a1a1d;
+  --text-soft: #42424a;
+  --subdued: #6b6b75; /* 4.9:1 on --surface */
+
+  --accent: #1a1a1d;
+  --accent-ink: #f7f7fa;
+
+  /* Re-stepped for the light surface, not flipped: the same five hues at
+     the lightness each one needs to clear 4.5:1 against #ececef. */
+  --brand-primary: #8a4e9c;
+  --brand-secondary: #006981;
+  --ok: #317905;
+  --warn: #9d5500;
+  --bad: #9e001f;
+  --accent-glow: 0 0 28px rgb(26 26 29 / 0.14);
+
+  --grade-4: #1a1a1d;
+  --grade-3: #4e4e57;
+  --grade-2: #7c7c86;
+  --grade-1: #a6a6b0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  scroll-padding-top: 32px;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* No scrollbars anywhere.
+ *
+ * Everything still scrolls — wheel, trackpad, touch, keyboard and the
+ * scroll-into-view calls the index makes — but nothing paints a track. The
+ * trade is real and worth naming: a horizontally scrollable table loses its
+ * only standing hint that there is more to the right, so any element that
+ * scrolls sideways needs an affordance of its own (a fade, an arrow, or a
+ * column that is visibly cut). The tall ones are fine: a long page is its
+ * own invitation to scroll. */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+img,
+svg {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 540;
+  line-height: 1.08;
+  letter-spacing: -0.028em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+code,
+kbd,
+pre {
+  font-family: var(--mono);
+}
+
+/* ─── Type scale ───────────────────────────────────────────────────────── */
+
+.h1 {
+  font-size: clamp(2.4rem, 6.4vw, 4.1rem);
+}
+
+.h2 {
+  font-size: clamp(1.85rem, 3.9vw, 2.7rem);
+}
+
+.h3 {
+  font-size: clamp(1.1rem, 1.8vw, 1.32rem);
+  letter-spacing: -0.018em;
+}
+
+.lede {
+  font-size: clamp(1.02rem, 1.5vw, 1.16rem);
+  color: var(--text-soft);
+  line-height: 1.62;
+}
+
+.body {
+  color: var(--subdued);
+  font-size: 0.97rem;
+}
+
+/* Numbers are monospaced. Status codes, counts and durations line up column
+   to column, so the eye can scan down instead of reading across. It is the
+   rule that makes the data components read as instruments. */
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Tracking this wide needs room. On a phone the label runs the full width of
+   the column and stops reading as a label, so it tightens. */
+.eyebrow {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--subdued);
+}
+
+@media (min-width: 620px) {
+  .eyebrow {
+    letter-spacing: 0.26em;
+  }
+}
+
+.dim {
+  color: var(--subdued);
+}
+
+/* ─── Soft primitives ──────────────────────────────────────────────────── */
+
+/* A shape standing proud of the page. */
+.soft {
+  background: var(--raised);
+  border-radius: var(--radius);
+  box-shadow: var(--soft-raised);
+}
+
+.soft-sm {
+  background: var(--raised);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--soft-raised-sm);
+}
+
+/* A well: the same shape pressed into the page. */
+.well {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--soft-inset);
+}
+
+/* Cards, not strips. Every block of content is a card with the same radius
+   and padding, floating on the canvas. Alignment comes from the shared
+   gutter, not from borders between full-width bars. */
+.card {
+  background: var(--raised);
+  border-radius: var(--radius);
+  box-shadow: var(--soft-raised);
+  padding: 26px;
+}
+
+/* Hover presses the card into the page rather than lifting it — the shadow
+   inversion is the one gesture this whole style is built on, so the site
+   should use it where it can be felt. */
+.card-press {
+  transition:
+    box-shadow 0.4s var(--ease),
+    transform 0.4s var(--ease);
+}
+
+.card-press:hover,
+.card-press:focus-within {
+  box-shadow: var(--soft-inset);
+  transform: translateY(1px);
+}
+
+/* ─── Buttons ──────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 22px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  background: var(--raised);
+  box-shadow: var(--soft-raised-sm);
+  transition:
+    box-shadow 0.28s var(--ease),
+    color 0.28s var(--ease),
+    transform 0.28s var(--ease);
+  white-space: nowrap;
+}
+
+.btn:hover {
+  color: var(--accent);
+}
+
+.btn:active {
+  box-shadow: var(--soft-inset-sm);
+  transform: translateY(1px);
+}
+
+/* The one accent on the page. Spending it anywhere else makes the one place
+   that matters invisible. */
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--soft-raised-sm), var(--accent-glow);
+}
+
+.btn-accent:hover {
+  color: var(--accent-ink);
+  filter: brightness(0.96);
+}
+
+.btn-quiet {
+  background: transparent;
+  box-shadow: none;
+  color: var(--subdued);
+  padding: 13px 16px;
+}
+
+.btn-quiet:hover {
+  color: var(--text);
+  background: var(--hover);
+  box-shadow: none;
+}
+
+.kbd {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--subdued);
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: var(--soft-inset-sm);
+}
+
+/* ─── Chips ────────────────────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 0.73rem;
+  letter-spacing: 0.04em;
+  padding: 4px 11px;
+  border-radius: var(--pill);
+  background: var(--surface);
+  box-shadow: var(--soft-inset-sm);
+  color: var(--text-soft);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+/* ─── Layout ───────────────────────────────────────────────────────────── */
+
+.section {
+  padding: 92px 0;
+}
+
+.section-tight {
+  padding: 56px 0;
+}
+
+.section-head {
+  max-width: 660px;
+  margin-bottom: 44px;
+  display: grid;
+  gap: 16px;
+}
+
+.grid {
+  display: grid;
+  gap: var(--gutter);
+}
+
+@media (min-width: 760px) {
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ─── Reveal ───────────────────────────────────────────────────────────── */
+
+/* Only hide what JS will later show. Without the `.js` guard set in the head,
+   a reader with scripts off gets a blank page. */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.js [data-reveal].in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.75s var(--ease),
+    transform 0.75s var(--ease);
+}
+
+/* ─── Page transition ──────────────────────────────────────────────────── */
+
+/* Vue's route transition. `out-in`, so the two pages never overlap and the
+   panel never grows to hold both at once. */
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity 0.28s var(--ease),
+    transform 0.28s var(--ease);
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* ─── Chart entrances ──────────────────────────────────────────────────── */
+
+/* All three hang off the reveal directive's `.in` class, so a chart animates
+   when it is scrolled to rather than when the page loads — otherwise the
+   whole performance happens offscreen and nobody sees it. */
+
+/* A sparkline draws itself. `pathLength="1"` on the path normalises the
+   length, so one dash value works for any series without measuring. */
+.js [data-reveal] .spark-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.js [data-reveal].in .spark-line {
+  animation: spark-draw 1.15s var(--ease) 0.12s forwards;
+}
+
+.js [data-reveal] .spark-area {
+  opacity: 0;
+}
+
+.js [data-reveal].in .spark-area {
+  animation: fade-up 0.8s var(--ease) 0.6s forwards;
+}
+
+@keyframes spark-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fade-up {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Bars grow from their left edge. Transform rather than width, so the inline
+   width stays authoritative and nothing has to be recomputed. */
+.js [data-reveal] .grow {
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.js [data-reveal].in .grow {
+  transform: scaleX(1);
+  transition: transform 0.85s var(--ease) var(--d, 0s);
+}
+
+/* A density grid wipes in from the left. */
+.js [data-reveal] .sweep {
+  clip-path: inset(0 100% 0 0);
+}
+
+.js [data-reveal].in .sweep {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1s var(--ease) 0.1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Every entrance above collapses to its finished state. */
+  .js [data-reveal] .spark-line {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
+
+  .js [data-reveal] .spark-area,
+  .js [data-reveal].in .spark-area {
+    opacity: 1;
+    animation: none;
+  }
+
+  .js [data-reveal] .grow {
+    transform: none;
+  }
+
+  .js [data-reveal] .sweep {
+    clip-path: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "artelier-agency",
+  "private": true,
+  "type": "module",
+  "description": "artelier.agency — a dashboard and data-UI studio. Statically generated for GitHub Pages.",
+  "scripts": {
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "npx serve .output/public",
+    "postinstall": "nuxt prepare",
+    "icons": "node scripts/export-icons.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/inter-tight": "^5.1.1",
+    "@fontsource-variable/jetbrains-mono": "^5.2.5",
+    "@fontsource-variable/martian-mono": "^5.3.0",
+    "nuxt": "^4.6.2"
+  }
+}

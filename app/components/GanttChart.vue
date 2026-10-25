@@ -1,0 +1,704 @@
+<script setup lang="ts">
+// The engagement, as a Gantt chart.
+//
+// Two things make it worth building rather than drawing: the length control
+// rescales the whole plan, because a four-week job and a twelve-week job are
+// the same shape at different sizes; and the marker can be dragged across the
+// timeline to ask "what is happening in week six?" — which is the only
+// question anyone actually brings to a Gantt chart.
+//
+// Phase extents are stored as fractions of the engagement rather than dates,
+// so one set of numbers serves every duration and the bars are positioned in
+// percentages that need no measuring.
+
+type Phase = {
+  name: string
+  tech?: string
+  from: number
+  to: number
+  detail: string
+}
+
+const phases: Phase[] = [
+  {
+    name: 'Discovery & read',
+    from: 0,
+    to: 0.12,
+    detail: 'We use the product the way your users do and write down every question the screen implies but does not answer.',
+  },
+  {
+    name: 'Information design',
+    from: 0.08,
+    to: 0.3,
+    detail: 'The decisions the interface exists to support, ranked. Mostly argument rather than pixels, and where most of the value is.',
+  },
+  {
+    name: 'Design system',
+    tech: 'Flutter',
+    from: 0.22,
+    to: 0.5,
+    detail: 'Tokens, surfaces and type as a themed library — light, dark and density modes from one source.',
+  },
+  {
+    name: 'Interface build',
+    tech: 'Flutter',
+    from: 0.38,
+    to: 0.84,
+    detail: 'Screens assembled from the system and reviewed in a branch. Design and front-end code happen together, never as a handover.',
+  },
+  {
+    name: 'Engine & data',
+    tech: 'Rust',
+    from: 0.3,
+    to: 0.72,
+    detail: 'The work behind the chart: queries, aggregation and whatever has to stay fast when the dataset stops being a demo.',
+  },
+  {
+    name: 'Platform build',
+    tech: 'iOS',
+    from: 0.58,
+    to: 0.9,
+    detail: 'Native shell, platform conventions and the parts of the interface that should not be a web view.',
+  },
+  {
+    name: 'Testing & access',
+    from: 0.62,
+    to: 0.96,
+    detail: 'Keyboard paths, contrast, reduced motion and screen readers — checked against the build rather than promised in a deck.',
+  },
+  {
+    name: 'Handover',
+    from: 0.88,
+    to: 1,
+    detail: 'Tokens, components and the reasoning behind them, written down so the next person does not have to guess.',
+  },
+]
+
+// from-index → to-index. Drawn as elbows, the way a real Gantt shows that one
+// piece of work cannot begin until another has produced something.
+const links: [number, number][] = [
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [1, 4],
+  [4, 5],
+  [3, 6],
+  [6, 7],
+]
+
+const durations = [
+  { weeks: 4, label: '1 month' },
+  { weeks: 8, label: '2 months' },
+  { weeks: 12, label: '3 months' },
+]
+
+const weeks = ref(8)
+// Where the scrub marker sits, as a fraction of the engagement.
+const at = ref(0.42)
+const selected = ref<number | null>(null)
+const track = ref<HTMLElement>()
+
+const ROW = 46 // row height in px; the link elbows do their y arithmetic on it
+
+const weekCols = computed(() => Array.from({ length: weeks.value }, (_, i) => i + 1))
+const currentWeek = computed(() => Math.max(1, Math.ceil(at.value * weeks.value)))
+
+const active = computed(() =>
+  phases.filter((p) => at.value >= p.from && at.value <= p.to).map((p) => p.name),
+)
+
+function weekRange(p: Phase) {
+  const first = Math.max(1, Math.ceil(p.from * weeks.value) || 1)
+  const last = Math.max(first, Math.ceil(p.to * weeks.value))
+  return first === last ? `wk ${first}` : `wk ${first}–${last}`
+}
+
+const pct = (n: number) => `${(n * 100).toFixed(3)}%`
+
+// ─── The marker ──────────────────────────────────────────────────────────
+
+function fractionFrom(clientX: number) {
+  const rect = track.value!.getBoundingClientRect()
+  return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
+}
+
+function onPointerDown(e: PointerEvent) {
+  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  at.value = fractionFrom(e.clientX)
+}
+
+function onPointerMove(e: PointerEvent) {
+  // buttons is 0 unless a button is held, which is what keeps this from
+  // following the pointer around after the drag has finished.
+  if (e.buttons === 0) return
+  at.value = fractionFrom(e.clientX)
+}
+
+function onKey(e: KeyboardEvent) {
+  const step = 1 / (weeks.value * 2)
+  if (e.key === 'ArrowRight') at.value = Math.min(1, at.value + step)
+  else if (e.key === 'ArrowLeft') at.value = Math.max(0, at.value - step)
+  else if (e.key === 'Home') at.value = 0
+  else if (e.key === 'End') at.value = 1
+  else return
+  e.preventDefault()
+}
+
+// ─── Links ───────────────────────────────────────────────────────────────
+
+// Each elbow is two absolutely-positioned rules rather than an SVG overlay,
+// because the x coordinates are percentages of a flexible track and the y
+// coordinates are multiples of a fixed row height. Mixing those units inside
+// one SVG viewBox means measuring the track on every resize; in CSS it costs
+// nothing.
+const elbows = computed(() =>
+  links.map(([a, b]) => {
+    const from = phases[a]!
+    const to = phases[b]!
+    const top = Math.min(a, b) * ROW + ROW / 2
+    const height = Math.abs(b - a) * ROW
+    return {
+      key: `${a}-${b}`,
+      x: pct(from.to),
+      top,
+      height,
+      armTop: b * ROW + ROW / 2,
+      armWidth: pct(Math.max(0, to.from - from.to)),
+    }
+  }),
+)
+</script>
+
+<template>
+  <div class="gantt card">
+    <header class="head">
+      <div>
+        <span class="eyebrow">Typical engagement</span>
+        <h3 class="h3">{{ durations.find((d) => d.weeks === weeks)?.label }}, start to handover</h3>
+      </div>
+      <div class="segmented" role="group" aria-label="Engagement length">
+        <button
+          v-for="d in durations"
+          :key="d.weeks"
+          type="button"
+          :class="{ on: weeks === d.weeks }"
+          :aria-pressed="weeks === d.weeks"
+          @click="weeks = d.weeks"
+        >
+          {{ d.label }}
+        </button>
+      </div>
+    </header>
+
+    <div class="scroller">
+      <div class="chart">
+        <!-- Left column: the phase list -->
+        <div class="names">
+          <div class="col-head">
+            <span class="eyebrow">Phase</span>
+            <span class="eyebrow">Weeks</span>
+          </div>
+          <button
+            v-for="(p, i) in phases"
+            :key="p.name"
+            type="button"
+            class="name-row"
+            :class="{ on: active.includes(p.name), picked: selected === i }"
+            :aria-expanded="selected === i"
+            @click="selected = selected === i ? null : i"
+          >
+            <span class="name">
+              {{ p.name }}
+              <span v-if="p.tech" class="tech num">{{ p.tech }}</span>
+            </span>
+            <span class="weeks num">{{ weekRange(p) }}</span>
+          </button>
+        </div>
+
+        <!-- Right column: the timeline -->
+        <div class="lanes">
+          <TransitionGroup tag="div" name="col" class="col-head weeks-head">
+            <span
+              v-for="w in weekCols"
+              :key="w"
+              class="week num"
+              :style="{ width: pct(1 / weeks) }"
+            >{{ w }}</span>
+          </TransitionGroup>
+
+          <div
+            ref="track"
+            class="track"
+            :style="{ '--cols': weeks }"
+            role="slider"
+            tabindex="0"
+            :aria-valuemin="1"
+            :aria-valuemax="weeks"
+            :aria-valuenow="currentWeek"
+            :aria-valuetext="`Week ${currentWeek} of ${weeks}`"
+            aria-label="Scrub the timeline"
+            @pointerdown="onPointerDown"
+            @pointermove="onPointerMove"
+            @keydown="onKey"
+          >
+            <!-- Dependency elbows, drawn under the bars -->
+            <span
+              v-for="e in elbows"
+              :key="e.key"
+              class="elbow-v"
+              :style="{ left: e.x, top: `${e.top}px`, height: `${e.height}px` }"
+            />
+            <span
+              v-for="e in elbows"
+              :key="`${e.key}-arm`"
+              class="elbow-h"
+              :style="{ left: e.x, top: `${e.armTop}px`, width: e.armWidth }"
+            />
+
+            <div
+              v-for="(p, i) in phases"
+              :key="p.name"
+              class="lane"
+              :style="{ height: `${ROW}px` }"
+            >
+              <span
+                class="bar"
+                :class="{ on: active.includes(p.name), picked: selected === i }"
+                :style="{ left: pct(p.from), width: pct(p.to - p.from) }"
+                @click.stop="selected = selected === i ? null : i"
+              >
+                <span class="bar-label">{{ p.tech || p.name }}</span>
+              </span>
+            </div>
+
+            <!-- The scrub marker -->
+            <span class="marker" :style="{ left: pct(at) }">
+              <span class="flag num">wk {{ currentWeek }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="foot">
+      <p class="body readout">
+        <span class="eyebrow">Week {{ currentWeek }}</span>
+        <TransitionGroup tag="span" name="phase" class="active-list">
+          <span v-for="name in active" :key="name" class="active-item">{{ name }}</span>
+          <span v-if="!active.length" key="none" class="dim">Nothing scheduled — drag the marker.</span>
+        </TransitionGroup>
+      </p>
+      <Transition name="detail">
+        <p v-if="selected !== null" class="body detail">
+          <strong>{{ phases[selected]!.name }}.</strong>
+          {{ phases[selected]!.detail }}
+        </p>
+      </Transition>
+    </footer>
+  </div>
+</template>
+
+<style scoped>
+.gantt {
+  display: grid;
+  gap: 22px;
+  padding: clamp(20px, 3vw, 28px);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.head .eyebrow {
+  margin-bottom: 7px;
+}
+
+/* ─── Length control ───────────────────────────────────────────────────── */
+
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--soft-inset-sm);
+}
+
+.segmented button {
+  padding: 8px 14px;
+  border-radius: calc(var(--radius-sm) - 4px);
+  font-size: 0.83rem;
+  color: var(--subdued);
+  white-space: nowrap;
+  transition:
+    color 0.25s var(--ease),
+    background 0.25s var(--ease);
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button.on {
+  color: var(--accent-ink);
+  background: var(--accent);
+  box-shadow: var(--soft-raised-sm);
+}
+
+/* ─── Frame ────────────────────────────────────────────────────────────── */
+
+/* A Gantt cannot be made narrow enough for a phone without becoming useless,
+   so below its minimum it scrolls sideways and the phase names stay put. */
+.scroller {
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--soft-inset);
+  padding: 4px;
+}
+
+.chart {
+  display: grid;
+  grid-template-columns: minmax(232px, 252px) minmax(430px, 1fr);
+  min-width: 690px;
+}
+
+.col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ─── Phase list ───────────────────────────────────────────────────────── */
+
+.names {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  height: 46px;
+  padding: 0 12px;
+  text-align: left;
+  font-size: 0.87rem;
+  color: var(--text-soft);
+  border-bottom: 1px solid var(--line);
+  transition:
+    color 0.25s var(--ease),
+    background 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+
+.name-row:last-child {
+  border-bottom: 0;
+}
+
+.name-row:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+/* The phases running at the marker's position. */
+.name-row.on {
+  color: var(--text);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.name-row.picked {
+  background: var(--raised);
+  box-shadow: var(--soft-raised-sm);
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tech {
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: var(--pill);
+  background: var(--raised);
+  box-shadow: var(--soft-inset-sm);
+  color: var(--subdued);
+  flex: none;
+}
+
+.weeks {
+  font-size: 0.7rem;
+  color: var(--subdued);
+  flex: none;
+}
+
+/* ─── Timeline ─────────────────────────────────────────────────────────── */
+
+.weeks-head {
+  padding: 0;
+}
+
+.week {
+  display: grid;
+  place-items: center;
+  font-size: 0.68rem;
+  color: var(--subdued);
+  flex: none;
+}
+
+.track {
+  position: relative;
+  /* Week gridlines, drawn rather than marked up — one element instead of
+     twelve, and they resize with the column count. */
+  background-image: linear-gradient(to right, var(--line) 1px, transparent 1px);
+  background-size: calc(100% / var(--cols)) 100%;
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+
+.track:focus-visible {
+  outline-offset: -2px;
+}
+
+.lane {
+  position: relative;
+  border-bottom: 1px solid var(--line);
+}
+
+.lane:last-of-type {
+  border-bottom: 0;
+}
+
+.bar {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 11px;
+  border-radius: var(--pill);
+  background: var(--elevated);
+  box-shadow: var(--soft-raised-sm);
+  color: var(--text-soft);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    background 0.3s var(--ease),
+    color 0.3s var(--ease),
+    box-shadow 0.3s var(--ease);
+}
+
+.bar:hover {
+  color: var(--text);
+}
+
+/* Running at the marker: the bar takes the accent. With no hue to spend,
+   being the brightest thing in the row is the whole signal. */
+.bar.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.bar.picked {
+  box-shadow: var(--soft-inset-sm);
+}
+
+.bar-label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Elbows ───────────────────────────────────────────────────────────── */
+
+.elbow-v,
+.elbow-h {
+  position: absolute;
+  background: var(--subdued);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.elbow-v {
+  width: 1px;
+}
+
+/* A dot where the connector meets the dependent row. A bare hairline reads
+   as a stray gridline; the dot is what makes it read as an arrival. */
+.elbow-v::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--subdued);
+}
+
+.elbow-h {
+  height: 1px;
+}
+
+/* ─── Marker ───────────────────────────────────────────────────────────── */
+
+.marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+/* A hairline is easy to lose against the gridlines, so the marker carries a
+   soft glow of its own. */
+.marker::before {
+  content: '';
+  position: absolute;
+  inset: 0 -6px;
+  background: var(--accent);
+  opacity: 0.12;
+  filter: blur(5px);
+}
+
+.flag {
+  position: absolute;
+  top: -31px;
+  left: 50%;
+  translate: -50% 0;
+  font-size: 0.64rem;
+  padding: 3px 9px;
+  border-radius: var(--pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  white-space: nowrap;
+}
+
+/* ─── Readout ──────────────────────────────────────────────────────────── */
+
+.foot {
+  display: grid;
+  gap: 12px;
+}
+
+/* Week columns, entering and leaving as the length changes. Absolute
+   positioning on the leaving element keeps the remaining columns from
+   jumping while it fades. */
+.col-enter-active,
+.col-leave-active {
+  transition:
+    opacity 0.35s var(--ease),
+    transform 0.35s var(--ease);
+}
+
+.col-enter-from,
+.col-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.col-leave-active {
+  position: absolute;
+}
+
+/* Phase names arriving and leaving as the marker is dragged. */
+.active-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: relative;
+}
+
+.active-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.active-item:not(:last-child)::after {
+  content: '·';
+  color: var(--subdued);
+}
+
+.phase-enter-active,
+.phase-leave-active {
+  transition:
+    opacity 0.3s var(--ease),
+    transform 0.3s var(--ease);
+}
+
+.phase-enter-from,
+.phase-leave-to {
+  opacity: 0;
+  transform: translateY(5px);
+}
+
+.phase-leave-active {
+  position: absolute;
+}
+
+.phase-move {
+  transition: transform 0.3s var(--ease);
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}
+
+.detail {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.88rem;
+  max-width: 68ch;
+}
+
+.detail strong {
+  color: var(--text);
+  font-weight: 540;
+}
+
+.detail-enter-active,
+.detail-leave-active {
+  transition:
+    opacity 0.3s var(--ease),
+    transform 0.3s var(--ease);
+}
+
+.detail-enter-from,
+.detail-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+</style>
