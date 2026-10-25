@@ -24,14 +24,22 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'en' },
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'theme-color', content: '#131315' },
+        { name: 'theme-color', content: '#e2e2e6' },
         { name: 'robots', content: 'index, follow, max-image-preview:large, max-snippet:-1' },
         { property: 'og:site_name', content: 'Artelier' },
         { property: 'og:locale', content: 'en_US' },
         { name: 'twitter:card', content: 'summary_large_image' },
       ],
-      // Lets CSS hide not-yet-revealed sections only when JS will reveal them.
-      script: [{ innerHTML: "document.documentElement.classList.add('js')" }],
+      // Runs before first paint. Marks JS as available, so CSS can hide
+      // not-yet-revealed sections only when JS will reveal them, and applies a
+      // saved dark theme before anything is drawn — light needs no attribute,
+      // so a visitor without JS or a saved choice simply gets the default.
+      script: [
+        {
+          innerHTML:
+            "(function(){var d=document.documentElement;d.classList.add('js');try{if(localStorage.getItem('artelier:theme')==='dark'){d.dataset.theme='dark';var m=document.querySelector('meta[name=theme-color]');m&&m.setAttribute('content','#131315')}}catch(e){}})()",
+        },
+      ],
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/brand/app-icon.svg' }],
     },
   },

@@ -10,7 +10,8 @@ useSeo({
 
 // The hero reads the visit it is part of. See usePageMetrics for why none of
 // these numbers are invented.
-const { scroll, dwell, fps, viewport, sectionsSeen } = usePageMetrics()
+const { scroll, dwell, fps, viewport, sectionsSeen, activity } = usePageMetrics()
+const ago = (i: number) => (i === activity.value.length - 1 ? 'now' : `${(activity.value.length - 1 - i) / 2}s ago`)
 
 const failures = [
   { symptom: 'Everything is the same size', cost: 'No answer to "what first?"', where: 'KPI row', grade: 4 },
@@ -83,13 +84,7 @@ const adoption = [
             <span class="live"><span class="dot" />live</span> · this session
           </p>
         </div>
-        <div class="screen-tools">
-          <span class="chip num">{{ studio.domain }}</span>
-          <NuxtLink class="btn btn-accent" to="/contact">
-            <Icon name="spark" :size="18" />
-            Start a project
-          </NuxtLink>
-        </div>
+        <span class="chip num">{{ studio.domain }}</span>
       </header>
 
       <div class="hero-body">
@@ -129,6 +124,13 @@ const adoption = [
                 note="css pixels"
               />
             </div>
+          </div>
+          <div class="activity">
+            <div class="activity-head">
+              <span class="eyebrow">Scroll activity · last 20s</span>
+              <span class="num activity-now">{{ activity[activity.length - 1] }}<span class="unit">px</span></span>
+            </div>
+            <Sparkline :points="activity" unit="px" :label="ago" />
           </div>
           <p class="panel-foot body">
             Measured from your visit, in your browser, and sent nowhere. It
@@ -217,7 +219,7 @@ const adoption = [
             <span class="eyebrow">Trend</span>
             <span class="chip num">+408%</span>
           </div>
-          <Sparkline :points="traffic" />
+          <Sparkline :points="traffic" unit="k" :label="(i) => `week ${i + 1}`" />
           <p class="body">Smoothed series with a fading fill. One path, no dependency.</p>
         </article>
 
@@ -226,7 +228,7 @@ const adoption = [
             <span class="eyebrow">Inverse trend</span>
             <span class="chip num">−58%</span>
           </div>
-          <Sparkline :points="latency" />
+          <Sparkline :points="latency" unit="ms" :label="(i) => `release ${i + 1}`" />
           <p class="body">The same component, reading a metric where down is good.</p>
         </article>
 
@@ -332,6 +334,14 @@ const adoption = [
   border-bottom: 1px solid var(--line);
 }
 
+/* On a phone the app bar already names the screen, so the hero's own
+   header would be the same word twice in 200 pixels. */
+@media (max-width: 899px) {
+  .hero .screen-head {
+    display: none;
+  }
+}
+
 .screen-title {
   font-size: clamp(1.7rem, 3vw, 2.1rem);
   font-weight: 560;
@@ -358,21 +368,6 @@ const adoption = [
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.25; }
-}
-
-.screen-tools {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Below the rail's breakpoint the mobile top bar already carries the brand
-   and the one action, so the screen header's copy of them would be the same
-   button twice on one screen. */
-@media (max-width: 899px) {
-  .screen-tools {
-    display: none;
-  }
 }
 
 /* ─── Hero ─────────────────────────────────────────────────────────────── */
@@ -414,6 +409,13 @@ const adoption = [
   margin-top: 6px;
 }
 
+/* On a phone the two actions stack full width — thumb targets, not links. */
+@media (max-width: 560px) {
+  .hero-actions .btn {
+    flex: 1 1 100%;
+  }
+}
+
 /* The panel lays itself out against its own width rather than the window's,
    so it reflows correctly whether it is sitting in the hero's second column
    or running full width underneath. */
@@ -448,6 +450,31 @@ const adoption = [
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   width: 100%;
+}
+
+.activity {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.activity-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.activity-now {
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.activity-now .unit {
+  margin-left: 2px;
+  font-size: 0.7rem;
+  color: var(--subdued);
 }
 
 .panel-foot {

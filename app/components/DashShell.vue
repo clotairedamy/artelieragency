@@ -8,13 +8,17 @@
 // the frame's own surface, reaching left into the rail with concave fillets
 // where it flows back into the frame, so the seam between rail and content
 // disappears behind whatever is selected. It slides as you scroll.
-const { nav: siteNav, studio } = useAppConfig()
+import type { Section } from '~/composables/useOverlays'
+
+const { nav: siteNav, pages, studio } = useAppConfig()
+const route = useRoute()
+const palette = usePalette()
 
 // Pages that are not the one-pager bring their own section list, so the rail
 // is always an index of the page you are actually on rather than a set of
 // anchors pointing at sections that do not exist here.
 const props = defineProps<{
-  sections?: { id: string; label: string; icon: string }[]
+  sections?: Section[]
   /**
    * Which section is current, when the page tracks that itself. Given one,
    * the rail stops observing and simply follows — which is what keeps it
@@ -23,12 +27,24 @@ const props = defineProps<{
   activeId?: string
 }>()
 
-const nav = computed(() => props.sections ?? siteNav)
+const nav = computed<Section[]>(() => props.sections ?? siteNav)
 
 const collapsed = ref(false)
 const activeIndex = ref(0)
 
 const active = computed(() => nav.value[activeIndex.value]?.id)
+
+// The app bar's breadcrumb: the section you are reading, or on a page with
+// no sections, the page itself.
+const where = computed(() =>
+  nav.value.length
+    ? nav.value[activeIndex.value]?.label ?? ''
+    : pages.find((p) => p.to === route.path)?.label ?? '',
+)
+
+// The app bar gains a hairline and a frosted fill once content scrolls
+// under it, and not before — at the top it should read as part of the page.
+const scrolled = ref(false)
 
 // Follow the page's own notion of position when it has one.
 watchEffect(() => {
@@ -69,15 +85,25 @@ onMounted(() => {
     onBeforeUnmount(() => spy.disconnect())
   }
 
-  // ⌘K starts a project from anywhere, the way it would in the app.
-  const router = useRouter()
+  // ⌘K opens the palette from anywhere, and so does / when focus is not in
+  // a field — the two conventions people bring from other tools.
   const onKey = (e: KeyboardEvent) => {
-    if (e.key.toLowerCase() !== 'k' || !(e.metaKey || e.ctrlKey)) return
-    e.preventDefault()
-    router.push('/contact')
+    const typing = (e.target as HTMLElement).closest?.('input, textarea, select, [contenteditable]')
+    if ((e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) {
+      e.preventDefault()
+      palette.value = !palette.value
+    }
   }
+  const onScroll = () => {
+    scrolled.value = window.scrollY > 8
+  }
+  onScroll()
   window.addEventListener('keydown', onKey)
-  onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+  window.addEventListener('scroll', onScroll, { passive: true })
+  onBeforeUnmount(() => {
+    window.removeEventListener('keydown', onKey)
+    window.removeEventListener('scroll', onScroll)
+  })
 })
 
 function toggle() {
@@ -92,21 +118,6 @@ function toggle() {
 
 <template>
   <div class="shell" :class="{ collapsed }">
-    <!-- Mobile only: the rail has nowhere to go on a phone, so the brand and
-         the one action move to a bar across the top. -->
-    <header class="topbar">
-      <NuxtLink to="/" class="brand">
-        <BrandMark :size="26" />
-        <span class="wordmark">{{ studio.name }}</span>
-      </NuxtLink>
-      <div class="topbar-actions">
-        <NuxtLink class="btn btn-quiet topbar-ds" to="/design-system" aria-label="Design system">
-          <Icon name="layers" :size="18" />
-        </NuxtLink>
-        <NuxtLink class="btn btn-accent topbar-cta" to="/contact">Start a project</NuxtLink>
-      </div>
-    </header>
-
     <aside class="rail">
       <NuxtLink to="/" class="rail-brand" :aria-label="studio.name">
         <BrandMark class="mark" :size="collapsed ? 40 : 78" />
@@ -163,8 +174,38 @@ function toggle() {
     </aside>
 
     <main class="panel">
+      <!-- The app bar: where you are, and the three things you might want
+           from anywhere — search, appearance, and the one action. -->
+      <header class="appbar" :class="{ scrolled }">
+        <NuxtLink to="/" class="appbar-brand" :aria-label="studio.name">
+          <BrandMark :size="30" />
+        </NuxtLink>
+        <nav class="crumbs" aria-label="Breadcrumb">
+          <NuxtLink to="/" class="crumb-root">{{ studio.name }}</NuxtLink>
+          <span class="crumb-sep" aria-hidden="true">/</span>
+          <span class="crumb-window">
+            <Transition name="crumb" mode="out-in">
+              <span :key="where" class="crumb-here" aria-current="location">{{ where }}</span>
+            </Transition>
+          </span>
+        </nav>
+        <div class="appbar-tools">
+          <button class="search" type="button" aria-label="Search or jump to" @click="palette = true">
+            <Icon name="discovery" :size="18" />
+            <span class="search-label">Search or jump to…</span>
+            <kbd class="kbd">⌘K</kbd>
+          </button>
+          <ThemeToggle />
+          <NuxtLink class="btn btn-accent appbar-cta" to="/contact">Start a project</NuxtLink>
+        </div>
+      </header>
+
       <slot />
     </main>
+
+    <MobileNav :sections="nav" :active-index="activeIndex" @select="activeIndex = $event" />
+    <CommandPalette :sections="nav" />
+    <ToastHost />
   </div>
 </template>
 
@@ -400,45 +441,183 @@ function toggle() {
   letter-spacing: -0.03em;
 }
 
-/* ─── Mobile bars ──────────────────────────────────────────────────────── */
+/* ─── App bar ──────────────────────────────────────────────────────────── */
 
-.topbar {
+/* Sticks to the top of the window inside the panel. The panel clips rather
+   than scrolls, so sticky still works against the page. */
+.appbar {
   position: sticky;
   top: 0;
   z-index: 30;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 18px;
-  background: var(--canvas);
+  gap: 14px;
+  height: 72px;
+  padding: 0 clamp(16px, 3vw, 32px);
+  border-bottom: 1px solid transparent;
+  transition:
+    background 0.3s var(--ease),
+    border-color 0.3s var(--ease),
+    backdrop-filter 0.3s var(--ease);
 }
 
-.topbar-actions {
+.appbar.scrolled {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  border-bottom-color: var(--line);
+}
+
+.appbar-brand {
+  display: none;
+  color: var(--text);
+}
+
+.crumbs {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+  font-size: 0.92rem;
+}
+
+.crumb-root {
+  color: var(--subdued);
+  transition: color 0.2s var(--ease);
+}
+
+.crumb-root:hover {
+  color: var(--text);
+}
+
+.crumb-sep {
+  color: var(--line-strong);
+}
+
+/* The current crumb rolls up into place as the section changes, so moving
+   through the page reads as moving through screens. */
+.crumb-window {
+  display: inline-block;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.crumb-here {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.crumb-enter-active,
+.crumb-leave-active {
+  transition:
+    transform 0.26s var(--ease),
+    opacity 0.26s var(--ease);
+}
+
+.crumb-enter-from {
+  transform: translateY(70%);
+  opacity: 0;
+}
+
+.crumb-leave-to {
+  transform: translateY(-70%);
+  opacity: 0;
+}
+
+.appbar-tools {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  margin-left: auto;
 }
 
-.topbar-cta {
-  padding: 10px 16px;
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 10px 0 14px;
+  min-width: 240px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--soft-inset-sm);
+  color: var(--subdued);
   font-size: 0.88rem;
+  transition: color 0.2s var(--ease);
 }
 
-.topbar-ds {
-  padding: 10px;
+.search:hover {
+  color: var(--text);
 }
 
-@media (min-width: 900px) {
-  .topbar {
+.search .kbd {
+  margin-left: auto;
+}
+
+.appbar-cta {
+  padding: 11px 18px;
+  font-size: 0.9rem;
+}
+
+/* ─── Phone ────────────────────────────────────────────────────────────── */
+
+/* The panel goes edge to edge — on a 390px screen a floating frame is a
+   24px margin of nothing — and leaves room at the bottom for the tab bar.
+   The app bar takes the brand, and keeps search and appearance as icons. */
+@media (max-width: 899px) {
+  .panel {
+    margin: 0;
+    min-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .appbar {
+    height: 64px;
+    gap: 12px;
+  }
+
+  .appbar-brand {
+    display: block;
+  }
+
+  .crumb-root,
+  .crumb-sep {
+    display: none;
+  }
+
+  .crumbs {
+    padding-left: 12px;
+    border-left: 1px solid var(--line-strong);
+    font-size: 0.95rem;
+  }
+
+  .search {
+    min-width: 0;
+    width: 42px;
+    padding: 0;
+    justify-content: center;
+    background: var(--raised);
+    box-shadow: var(--soft-raised-sm);
+    color: var(--text);
+  }
+
+  .search-label,
+  .search .kbd,
+  .appbar-cta {
     display: none;
   }
 }
 
-@media (max-width: 899px) {
-  .panel {
-    margin: 0 12px 12px;
-    min-height: 0;
+@media (min-width: 900px) and (max-width: 1180px) {
+  .search {
+    min-width: 0;
+  }
+  .search-label {
+    display: none;
   }
 }
 </style>

@@ -10,7 +10,7 @@
 // Depth is the interesting one: it scales the two shadows that make this
 // style work. At zero the page goes flat and you can see exactly how much of
 // the design was doing its job through elevation alone.
-const theme = ref<'dark' | 'light'>('dark')
+const { theme, set: setTheme } = useTheme()
 const radius = ref(20)
 const depth = ref(1)
 const density = ref<'comfortable' | 'compact'>('comfortable')
@@ -34,7 +34,6 @@ function shadows(d: number) {
 
 function apply() {
   const root = document.documentElement
-  root.dataset.theme = theme.value
   root.style.setProperty('--radius', `${radius.value}px`)
   root.style.setProperty('--radius-lg', `${Math.round(radius.value * 1.3)}px`)
   root.style.setProperty('--radius-sm', `${Math.max(4, Math.round(radius.value * 0.65))}px`)
@@ -52,7 +51,7 @@ function apply() {
 }
 
 function reset() {
-  theme.value = 'dark'
+  setTheme('light')
   radius.value = 20
   depth.value = 1
   density.value = 'comfortable'
@@ -95,12 +94,12 @@ onBeforeUnmount(() => {
         <label class="eyebrow" for="lab-theme">Theme</label>
         <div id="lab-theme" class="segmented" role="group" aria-label="Theme">
           <button
-            v-for="t in (['dark', 'light'] as const)"
+            v-for="t in (['light', 'dark'] as const)"
             :key="t"
             type="button"
             :class="{ on: theme === t }"
             :aria-pressed="theme === t"
-            @click="theme = t"
+            @click="setTheme(t, { x: ($event as MouseEvent).clientX, y: ($event as MouseEvent).clientY })"
           >
             {{ t }}
           </button>

@@ -14,6 +14,9 @@ export function usePageMetrics() {
   const fps = ref(60)
   const viewport = ref({ w: 0, h: 0 })
   const sectionsSeen = ref(0)
+  // How far the page moved in each of the last 40 half-seconds, in pixels:
+  // a live chart of the reader's own scrolling. Starts flat, as it should.
+  const activity = ref<number[]>(Array(40).fill(0))
 
   onMounted(() => {
     let raf = 0
@@ -57,6 +60,13 @@ export function usePageMetrics() {
       measureViewport()
     }
 
+    let lastY = window.scrollY
+    const sampler = window.setInterval(() => {
+      const y = window.scrollY
+      activity.value = [...activity.value.slice(1), Math.round(Math.abs(y - lastY))]
+      lastY = y
+    }, 500)
+
     measureViewport()
     measureScroll()
     raf = requestAnimationFrame(tick)
@@ -79,11 +89,12 @@ export function usePageMetrics() {
 
     onBeforeUnmount(() => {
       cancelAnimationFrame(raf)
+      clearInterval(sampler)
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onResize)
       spy.disconnect()
     })
   })
 
-  return { scroll, dwell, fps, viewport, sectionsSeen }
+  return { scroll, dwell, fps, viewport, sectionsSeen, activity }
 }

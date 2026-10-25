@@ -9,13 +9,22 @@ export default defineAppConfig({
     // The one sentence the whole site is built to earn.
     promise: 'We design the dashboard your users live in.',
   },
+  // Every page, for the command palette, the phone tab bar and its menu.
+  pages: [
+    { to: '/', label: 'Home', short: 'Home', icon: 'dashboard' },
+    { to: '/dashboard-example', label: 'Dashboard example', short: 'Example', icon: 'chart' },
+    { to: '/design-system', label: 'Design system', short: 'System', icon: 'system' },
+    { to: '/contact', label: 'Start a project', short: 'Contact', icon: 'mail' },
+  ],
+  // Sections of the home page. `short` is the phone tab bar's label, and
+  // `tab` puts a section in the bar itself rather than behind More.
   nav: [
-    { id: 'overview', label: 'Overview', icon: 'dashboard' },
-    { id: 'problem', label: 'The problem', icon: 'alert' },
-    { id: 'services', label: 'What we do', icon: 'blueprint' },
-    { id: 'lab', label: 'Theme lab', icon: 'theme' },
-    { id: 'shelf', label: 'Components', icon: 'system' },
-    { id: 'process', label: 'Process', icon: 'growth' },
-    { id: 'principles', label: 'Principles', icon: 'compass' },
+    { id: 'overview', label: 'Overview', short: 'Overview', icon: 'dashboard', tab: true },
+    { id: 'problem', label: 'The problem', short: 'Problem', icon: 'alert' },
+    { id: 'services', label: 'What we do', short: 'Services', icon: 'blueprint', tab: true },
+    { id: 'lab', label: 'Theme lab', short: 'Theme', icon: 'theme' },
+    { id: 'shelf', label: 'Components', short: 'Charts', icon: 'system', tab: true },
+    { id: 'process', label: 'Process', short: 'Process', icon: 'growth', tab: true },
+    { id: 'principles', label: 'Principles', short: 'Rules', icon: 'compass' },
   ],
 })

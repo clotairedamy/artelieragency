@@ -142,11 +142,14 @@
   --mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --max: 1080px;
+
+  --spot: rgb(255 255 255 / 0.055);
 }
 
-/* The light theme. Its shade cannot be black or the whole page reads as
-   dirty — it is the blue-grey a real object casts onto paper. */
-:root[data-theme='light'] {
+/* The light theme, and the default: it applies unless the visitor has chosen
+   dark. Its shade cannot be black or the whole page reads as dirty — it is
+   the blue-grey a real object casts onto paper. */
+:root:not([data-theme='dark']) {
   --canvas: #e2e2e6;
   --rail: #e7e7eb;
   --surface: #ececef;
@@ -176,6 +179,7 @@
   --warn: #9d5500;
   --bad: #9e001f;
   --accent-glow: 0 0 28px rgb(26 26 29 / 0.14);
+  --spot: rgb(255 255 255 / 0.75);
 
   --grade-4: #1a1a1d;
   --grade-3: #4e4e57;
@@ -198,13 +202,41 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
-  scroll-padding-top: 32px;
+  /* Clears the sticky app bar, so a jumped-to section is not under it. */
+  scroll-padding-top: 88px;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+/* The phone menu sheet is up: the page underneath holds still. */
+html.sheet-open {
+  overflow: hidden;
+}
+
+/* Theme switch: the new theme spreads out as a circle from the button that
+   asked for it (--vt-x/--vt-y, set by useTheme), over a frozen copy of the
+   old one. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: theme-reveal 0.62s var(--ease);
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 0));
+  }
+  to {
+    clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 0));
+  }
 }
 
 /* No scrollbars anywhere.
@@ -366,6 +398,18 @@ pre {
   border-radius: var(--radius);
   box-shadow: var(--soft-raised);
   padding: 26px;
+}
+
+/* A soft light that follows the pointer across a card (plugins/spotlight),
+   as if the surface caught it. A second background layer over the card's
+   own colour, so it needs no extra element and cannot cover content. */
+.card.lit,
+.tile.lit {
+  background-image: radial-gradient(
+    360px circle at var(--mx) var(--my),
+    var(--spot),
+    transparent 70%
+  );
 }
 
 /* Hover presses the card into the page rather than lifting it — the shadow
