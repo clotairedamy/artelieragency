@@ -57,7 +57,7 @@ const navGroups = [
     <ComponentDoc
       id="callout"
       name="Callout"
-      description="A docs callout. The edge and label carry the tone, and every tone carries a glyph."
+      description="A docs callout. Every kind is a glyph and a word, never a coloured edge; a warning is the brightest of the three."
       :code="calloutCode"
       :props="[{ name: 'type', type: 'note | tip | warning', default: 'note' }]"
     >
@@ -71,7 +71,7 @@ const navGroups = [
     <ComponentDoc
       id="appwindow"
       name="AppWindow"
-      description="A screenshot in a soft window frame. The first traffic dot carries the accent."
+      description="A screenshot in a soft window frame. The traffic dots are grey wells: the window is chrome, so it spends no accent."
       :code="windowCode"
       :props="[
         { name: 'src / alt', type: 'string', default: '—' },

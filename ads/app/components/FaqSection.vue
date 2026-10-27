@@ -7,14 +7,13 @@ defineProps<{ faqs: Faq[] }>()
 </script>
 
 <template>
-  <div class="max faq">
+  <div class="ads-faq-section max">
     <AdsAccordion :items="faqs" />
   </div>
 </template>
 
 <style scoped>
-.faq {
+.ads-faq-section {
   max-width: 760px;
-  margin-inline: auto;
 }
 </style>

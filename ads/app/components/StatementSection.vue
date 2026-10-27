@@ -4,9 +4,9 @@ defineProps<{ lines: string[]; facts?: { term: string; value: string }[] }>()
 </script>
 
 <template>
-  <section class="statement">
+  <section class="ads-statement-section">
     <RevealHeading :lines="lines" size="statement" tag="p" />
-    <dl v-if="facts?.length" class="ads-dl statement-facts">
+    <dl v-if="facts?.length" class="ads-dl ads-statement-section__facts">
       <template v-for="f in facts" :key="f.term">
         <dt>{{ f.term }}</dt>
         <dd>{{ f.value }}</dd>
@@ -16,12 +16,12 @@ defineProps<{ lines: string[]; facts?: { term: string; value: string }[] }>()
 </template>
 
 <style scoped>
-.statement {
+.ads-statement-section {
   display: grid;
   gap: 28px;
 }
 
-.statement-facts {
+.ads-statement-section__facts {
   max-width: 46rem;
 }
 </style>

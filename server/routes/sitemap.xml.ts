@@ -1,5 +1,9 @@
 // Written at prerender time; GitHub Pages serves the result as a static file.
-const routes = ['/', '/design-system', '/dashboard-example', '/contact', '/privacy']
+// The UI Kit: each kit's overview, its MCP page, its index, and one page per category.
+const categories = ['mcp', 'all', 'surfaces', 'actions', 'inputs', 'data-display', 'disclosure', 'navigation', 'feedback', 'patterns', 'elements', 'sections', 'docs']
+const docs = ['/ui-kit', '/ui-kit/rust'].flatMap((kit) => [kit, ...categories.map((c) => `${kit}/${c}`)])
+
+const routes = ['/', '/design-system', '/dashboard-example', '/contact', '/privacy', ...docs]
 
 export default defineEventHandler((event) => {
   const today = new Date().toISOString().slice(0, 10)

@@ -8,7 +8,9 @@
     "generate": "nuxt generate",
     "preview": "npx serve .output/public",
     "postinstall": "nuxt prepare",
-    "icons": "node scripts/export-icons.mjs"
+    "icons": "node scripts/export-icons.mjs",
+    "rs-css": "node ads/scripts/rs-css.mjs",
+    "rs-css:check": "node ads/scripts/rs-css.mjs --check"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

@@ -1,76 +1,109 @@
 <script setup lang="ts">
-// A scrolling band of pills — a quiet way to show breadth. Pauses on hover and
-// stops under reduced motion.
+// A scrolling band of pills — a quiet way to show breadth. The second lane is
+// a copy for the seamless loop, hidden from assistive tech.
+//
+// Anything that moves for more than five seconds needs a way to stop it, so
+// the band pauses on hover, on focus, and from its own toggle. Under reduced
+// motion it never starts: the pills wrap into a still row instead.
 withDefaults(
   defineProps<{ items?: string[] }>(),
   { items: () => ['Accessibility', 'SEO', 'Performance', 'Content', 'Structure', 'Security'] },
 )
+
+const paused = ref(false)
 </script>
 
 <template>
-  <div class="marquee">
-    <div class="track">
-      <div v-for="copy in 2" :key="copy" class="lane" :aria-hidden="copy === 2">
-        <span v-for="(item, i) in items" :key="i" class="item">{{ item }}</span>
+  <div class="ads-marquee" :class="{ 'is-paused': paused }">
+    <div class="ads-marquee__viewport">
+      <div class="ads-marquee__track">
+        <ul v-for="copy in 2" :key="copy" class="ads-marquee__lane" role="list" :aria-hidden="copy === 2 ? 'true' : undefined">
+          <li v-for="(item, i) in items" :key="i" class="ads-marquee__item">{{ item }}</li>
+        </ul>
       </div>
     </div>
+    <button type="button" class="btn btn-quiet btn-sm ads-marquee__toggle" :aria-pressed="paused" @click="paused = !paused">
+      Pause motion
+    </button>
   </div>
 </template>
 
 <style scoped>
-.marquee {
+.ads-marquee {
   display: grid;
-  gap: 22px;
+  justify-items: center;
+  gap: var(--sp-2);
+}
+
+/* The fade at either end is a mask, not a painted gradient: it shapes the
+   band and adds no colour. */
+.ads-marquee__viewport {
+  width: 100%;
   overflow: hidden;
+  padding: var(--sp-4) 0;
   mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
   -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-  padding: 20px 0;
 }
 
-.track {
+/* Linear on purpose: --ease on a loop would surge and stall every lap. */
+.ads-marquee__track {
   display: flex;
   width: max-content;
-  animation: slide 80s linear infinite;
+  animation: ads-marquee-slide 80s linear infinite;
 }
 
-.marquee:hover .track {
+.ads-marquee__viewport:hover .ads-marquee__track,
+.ads-marquee:focus-within .ads-marquee__track,
+.ads-marquee.is-paused .ads-marquee__track {
   animation-play-state: paused;
 }
 
-.lane {
+.ads-marquee__lane {
   display: flex;
-  gap: 20px;
-  padding-right: 20px;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0 var(--sp-4) 0 0;
+  list-style: none;
 }
 
-.item {
+/* Raised, not pressable: the pills are a list, not controls, so they do not
+   answer hover. */
+.ads-marquee__item {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--pill);
   background: var(--raised);
   box-shadow: var(--soft-raised-sm);
   font-size: 0.88rem;
   color: var(--text-soft);
   white-space: nowrap;
-  transition: color 0.2s var(--ease), box-shadow 0.3s var(--ease);
 }
 
-.item:hover {
-  color: var(--text);
-  box-shadow: var(--soft-inset-sm);
-}
-
-@keyframes slide {
+@keyframes ads-marquee-slide {
   to {
     transform: translateX(-50%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .track {
+  .ads-marquee__viewport {
+    mask: none;
+    -webkit-mask: none;
+  }
+  .ads-marquee__track {
+    width: auto;
+    justify-content: center;
     animation: none;
+  }
+  .ads-marquee__lane {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0;
+  }
+  .ads-marquee__lane[aria-hidden='true'],
+  .ads-marquee__toggle {
+    display: none;
   }
 }
 </style>

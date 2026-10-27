@@ -3,14 +3,15 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
   devtools: { enabled: false },
 
-  css: [
-    '@fontsource-variable/bricolage-grotesque',
-    '@fontsource-variable/inter-tight',
-    '@fontsource-variable/martian-mono',
-    '@fontsource-variable/jetbrains-mono',
-    '~/assets/css/main.css',
-    '~/assets/css/ads.css',
-  ],
+  // The site is built on ADS, the Artelier Design System, kept in ads/ as a
+  // Nuxt layer: its tokens, fonts, stylesheets, components and composables
+  // all auto-import from there. The site never overrides a kit component —
+  // the /ui-kit pages preview the kit's — it wraps one instead and
+  // passes its own copy (StudioFooter, StudioCta).
+  extends: ['./ads'],
+
+  // Only what the site adds on top of the kit.
+  css: ['~/assets/css/main.css'],
 
   app: {
     // Vue's own transition, applied between routes. Classes live in main.css
@@ -49,9 +50,9 @@ export default defineNuxtConfig({
     preset: 'github_pages',
     prerender: {
       crawlLinks: true,
-      // /design-system is not linked from anywhere yet, so the crawler
-      // cannot find it. Named here so it still builds.
-      routes: ['/', '/design-system', '/dashboard-example', '/sitemap.xml'],
+      // The crawler finds the rest from these. The component docs are named
+      // too, so a broken link in the rail cannot quietly drop them.
+      routes: ['/', '/design-system', '/dashboard-example', '/ui-kit', '/ui-kit/rust', '/sitemap.xml'],
       failOnError: true,
       // Write /contact as contact.html rather than contact/index.html, so GitHub
       // Pages answers /contact with a 200 instead of redirecting to /contact/.

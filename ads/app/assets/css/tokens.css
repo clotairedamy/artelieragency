@@ -2,12 +2,35 @@
   ADS — design tokens.
   Artelier Design System · monochrome soft UI.
 
-  Monochrome soft UI: nothing has a border, shape comes from two shadows on a
-  surface the same colour as its background, and hierarchy is elevation and
-  value rather than hue. The chrome is grey so the data can keep the whole
-  colour channel.
+  Monochrome soft UI, ported from the CrawlStat desktop app's theme. Nothing
+  has a border. Shape comes entirely from two shadows — a light one up and to
+  the left, a dark one down and to the right — on a surface the same colour as
+  what is behind it. That reads as a shape extruded from the page, or pressed
+  into it. Flip the two shadows and a button becomes a hole. That is the whole
+  trick.
 
-  Every component and utility below reads one of these custom properties, so
+  Taking the hue out does not weaken the style, it concentrates it: soft UI
+  already works entirely in luminance. Two rules hold the monochrome version
+  together, and a third follows from them.
+
+  1. White is the accent. The brightest value on screen is reserved for the one
+     thing we want clicked. Everything else lives in a narrow charcoal band.
+  2. Depth is the only decoration. No colour, no illustration, no gradient
+     beyond the shadow pair. Hierarchy is elevation and value alone.
+  3. The chrome is grey so the data can be coloured. Hue is spent inside a
+     plot area and nowhere else.
+
+  ## The honest caveat
+
+  Soft UI has a real accessibility problem and it would be poor form for a
+  studio that sells interface work to pretend otherwise: with no borders and a
+  surface matching its background, the edges of controls are implied by shadow
+  alone. So this implementation bends the style where it has to — text and
+  icons keep full contrast against their surface, the softness is in the
+  container and never in the content, and every interactive thing gets a
+  visible ring on focus so a keyboard user can always see where they are.
+
+  Every component and utility reads one of these custom properties, so
   change a token and everything listing it moves together — that is the
   difference between a system and a style guide.
 */

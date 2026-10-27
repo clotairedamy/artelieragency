@@ -1,19 +1,20 @@
 <script setup lang="ts">
 // A split section: copy on one side, an image (or any visual) on the other.
-// `flip` swaps them. The visual is a slot and sits in a soft frame.
+// `flip` swaps them. The visual is a slot and sits in a raised frame — depth,
+// not a border, is what separates it from the page.
 withDefaults(defineProps<{ eyebrow?: string; title: string; body?: string; flip?: boolean }>(), { eyebrow: '', body: '', flip: false })
 </script>
 
 <template>
-  <section class="section">
-    <div class="max inner" :class="{ flip }">
-      <div class="copy">
+  <section class="ads-image-section">
+    <div class="ads-image-section__inner max" :class="{ 'is-flipped': flip }">
+      <div class="ads-image-section__copy">
         <p v-if="eyebrow" class="eyebrow">{{ eyebrow }}</p>
-        <h2 class="title">{{ title }}</h2>
-        <p v-if="body" class="body">{{ body }}</p>
+        <h2 class="ads-image-section__title h2">{{ title }}</h2>
+        <p v-if="body" class="ads-image-section__body">{{ body }}</p>
         <slot name="actions" />
       </div>
-      <figure class="frame">
+      <figure class="ads-image-section__frame">
         <slot />
       </figure>
     </div>
@@ -21,11 +22,11 @@ withDefaults(defineProps<{ eyebrow?: string; title: string; body?: string; flip?
 </template>
 
 <style scoped>
-.section {
-  padding: 72px 0;
+.ads-image-section {
+  padding: var(--sp-8) 0;
 }
 
-.inner {
+.ads-image-section__inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(32px, 5vw, 72px);
@@ -33,29 +34,27 @@ withDefaults(defineProps<{ eyebrow?: string; title: string; body?: string; flip?
   padding: 0 clamp(20px, 4vw, 48px);
 }
 
-.inner.flip .copy {
+.ads-image-section__inner.is-flipped .ads-image-section__copy {
   order: 2;
 }
 
-.copy {
+.ads-image-section__copy {
   display: grid;
-  gap: 16px;
+  gap: var(--sp-4);
   justify-items: start;
 }
 
-.title {
-  font-size: clamp(1.9rem, 4vw, 2.7rem);
-  letter-spacing: -0.028em;
-  font-weight: 540;
+.ads-image-section__title {
+  font-family: var(--font-display);
 }
 
-.body {
+.ads-image-section__body {
   color: var(--subdued);
   font-size: 1rem;
   max-width: 52ch;
 }
 
-.frame {
+.ads-image-section__frame {
   margin: 0;
   padding: clamp(18px, 3vw, 30px);
   border-radius: var(--radius-lg);
@@ -65,10 +64,10 @@ withDefaults(defineProps<{ eyebrow?: string; title: string; body?: string; flip?
 }
 
 @media (max-width: 820px) {
-  .inner {
+  .ads-image-section__inner {
     grid-template-columns: 1fr;
   }
-  .inner.flip .copy {
+  .ads-image-section__inner.is-flipped .ads-image-section__copy {
     order: 0;
   }
 }

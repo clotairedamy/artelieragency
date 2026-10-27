@@ -1,21 +1,52 @@
 <script setup lang="ts">
 // The table from the app, on the web.
 //
-// Rows are separated by a whisper rather than a rule, numbers are monospaced
-// so columns can be scanned downward, the header sorts, and a keyboard cursor
-// moves with the arrow keys. The section of this site that argues most tables
-// are unreadable had better ship a readable one.
+// Rows are separated by a whisper rather than a rule — never striped, because
+// a stripe is a second signal competing with the cursor and the grades.
+// Numeric columns are right-aligned in tabular figures so they read by
+// magnitude down the page; text stays left. A column's unit lives in its
+// header, once, not in every cell. The header sorts, and a keyboard cursor
+// moves with the arrow keys; Enter (or a click) selects the row, which is the
+// cue to open it in a drawer beside the table — never in a modal over it.
 export type Row = Record<string, string | number>
 
+export type GridColumn = {
+  key: string
+  label: string
+  /** Shown in the header after the label: "Latency (ms)". */
+  unit?: string
+  /** Right-aligned, tabular. Inferred when every value in the column is a number. */
+  numeric?: boolean
+  /** Monospaced but left-aligned: identifiers, hashes, paths. */
+  mono?: boolean
+  /** Values 1–4 rendered as a luminance grade with a dot and a word. */
+  grade?: boolean
+  format?: (v: string | number) => string
+}
+
 const props = defineProps<{
-  columns: { key: string; label: string; align?: 'end'; mono?: boolean; grade?: boolean }[]
+  columns: GridColumn[]
   rows: Row[]
   caption?: string
 }>()
 
+const emit = defineEmits<{ select: [row: Row, index: number] }>()
+
 const sortKey = ref<string | null>(null)
 const sortAsc = ref(true)
 const cursor = ref(-1)
+const wrap = ref<HTMLElement | null>(null)
+
+const isNumeric = (c: GridColumn) =>
+  !c.grade && (c.numeric ?? (props.rows.length > 0 && props.rows.every((r) => typeof r[c.key] === 'number')))
+
+const cells = computed(() => props.columns.map((c) => ({ ...c, isNum: isNumeric(c) })))
+
+const display = (c: GridColumn & { isNum: boolean }, v: string | number | undefined) => {
+  if (v === undefined || v === null) return '—'
+  if (c.format) return c.format(v)
+  return c.isNum && typeof v === 'number' ? v.toLocaleString('en-GB') : String(v)
+}
 
 const sorted = computed(() => {
   if (!sortKey.value) return props.rows
@@ -28,6 +59,13 @@ const sorted = computed(() => {
   })
 })
 
+watch(
+  () => props.rows,
+  () => {
+    if (cursor.value >= props.rows.length) cursor.value = props.rows.length - 1
+  },
+)
+
 function sortBy(key: string) {
   if (sortKey.value === key) sortAsc.value = !sortAsc.value
   else {
@@ -36,39 +74,76 @@ function sortBy(key: string) {
   }
 }
 
+function move(to: number) {
+  const last = sorted.value.length - 1
+  cursor.value = Math.max(0, Math.min(last, to))
+  nextTick(() => {
+    wrap.value?.querySelectorAll('tbody tr')[cursor.value]?.scrollIntoView({ block: 'nearest' })
+  })
+}
+
+function select(i: number) {
+  const row = sorted.value[i]
+  if (row) emit('select', row, i)
+}
+
 function onKey(e: KeyboardEvent) {
-  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+  const page = 10
+  const at = cursor.value
+  if (e.key === 'ArrowDown') move(at + 1)
+  else if (e.key === 'ArrowUp') move(at - 1)
+  else if (e.key === 'PageDown') move(at + page)
+  else if (e.key === 'PageUp') move(at - page)
+  else if (e.key === 'Home') move(0)
+  else if (e.key === 'End') move(sorted.value.length - 1)
+  else if (e.key === 'Enter' && at >= 0) select(at)
+  else return
   e.preventDefault()
-  const next = cursor.value + (e.key === 'ArrowDown' ? 1 : -1)
-  cursor.value = Math.max(0, Math.min(sorted.value.length - 1, next))
 }
 
 // Four luminance steps stand in for severity. There is no red here, so the
-// rule is simply: the worse it is, the brighter it is.
+// rule is simply: the worse it is, the brighter it is — and the word says it.
 const gradeLabel = ['', 'low', 'medium', 'high', 'critical']
+const asGrade = (v: string | number | undefined) => Math.max(1, Math.min(4, Number(v) || 1)) as 1 | 2 | 3 | 4
+
+// The cursor is announced, since a moving highlight is invisible to a
+// screen reader: the first column names the row.
+const announce = computed(() => {
+  const r = sorted.value[cursor.value]
+  const first = cells.value[0]
+  if (!r || !first) return ''
+  return `${display(first, r[first.key])}, row ${cursor.value + 1} of ${sorted.value.length}`
+})
 </script>
 
 <template>
   <div
-    class="grid-wrap"
+    ref="wrap"
+    class="ads-data-grid"
     tabindex="0"
     role="group"
-    :aria-label="caption ?? 'Data table'"
+    :aria-label="`${caption ?? 'Data table'}. Arrow keys move, Enter opens the row.`"
     @keydown="onKey"
   >
-    <table>
+    <table class="ads-data-grid__table">
       <caption v-if="caption" class="sr-only">{{ caption }}</caption>
       <thead>
         <tr>
           <th
-            v-for="c in columns"
+            v-for="c in cells"
             :key="c.key"
-            :class="{ end: c.align === 'end' }"
+            scope="col"
+            class="ads-data-grid__th"
+            :class="{ 'is-num': c.isNum }"
             :aria-sort="sortKey === c.key ? (sortAsc ? 'ascending' : 'descending') : 'none'"
           >
-            <button type="button" @click="sortBy(c.key)">
-              {{ c.label }}
-              <span class="caret" :class="{ on: sortKey === c.key, desc: sortKey === c.key && !sortAsc }">↑</span>
+            <button type="button" class="ads-data-grid__sort" @click="sortBy(c.key)">
+              {{ c.label }}<span v-if="c.unit" class="ads-data-grid__unit"> ({{ c.unit }})</span>
+              <span
+                class="ads-data-grid__caret"
+                :class="{ 'is-active': sortKey === c.key, 'is-desc': sortKey === c.key && !sortAsc }"
+                aria-hidden="true"
+              >↑</span>
             </button>
           </th>
         </tr>
@@ -77,100 +152,113 @@ const gradeLabel = ['', 'low', 'medium', 'high', 'critical']
         <tr
           v-for="(r, i) in sorted"
           :key="i"
-          :class="{ cursor: cursor === i }"
+          class="ads-data-grid__row"
+          :class="{ 'is-cursor': cursor === i }"
+          :aria-current="cursor === i ? 'true' : undefined"
           @mouseenter="cursor = i"
+          @click="select(i)"
         >
           <td
-            v-for="c in columns"
+            v-for="c in cells"
             :key="c.key"
-            :class="{ end: c.align === 'end', num: c.mono }"
+            class="ads-data-grid__td"
+            :class="{ 'is-num': c.isNum, num: c.isNum || c.mono }"
           >
-            <span v-if="c.grade" class="grade" :style="{ opacity: 0.4 + Number(r[c.key]) * 0.15 }">
-              <span class="dot" />
-              {{ gradeLabel[Number(r[c.key])] }}
-            </span>
-            <template v-else>{{ r[c.key] }}</template>
+            <AdsStatus v-if="c.grade" :grade="asGrade(r[c.key])" :label="gradeLabel[asGrade(r[c.key])]!" />
+            <template v-else>{{ display(c, r[c.key]) }}</template>
           </td>
         </tr>
       </tbody>
     </table>
+    <span class="sr-only" aria-live="polite">{{ announce }}</span>
   </div>
 </template>
 
 <style scoped>
-.grid-wrap {
+.ads-data-grid {
   border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: var(--soft-inset);
-  padding: 6px 4px;
+  padding: 6px var(--sp-1);
   overflow-x: auto;
 }
 
-table {
+.ads-data-grid__table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.87rem;
   min-width: 540px;
 }
 
-th {
+.ads-data-grid__th {
   text-align: left;
   font-weight: 450;
   padding: 0;
 }
 
-th button {
+.ads-data-grid__sort {
   display: flex;
   align-items: center;
   gap: 6px;
   width: 100%;
   padding: 10px 14px;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
+  font-family: var(--font-label);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--subdued);
-  transition: color 0.25s var(--ease);
+  transition: color var(--dur-control) var(--ease);
 }
 
-th.end button {
+.ads-data-grid__th.is-num .ads-data-grid__sort {
   justify-content: flex-end;
 }
 
-th button:hover {
+.ads-data-grid__sort:hover {
   color: var(--text);
 }
 
-.caret {
+/* Units are read once, in the header, quieter than the label they qualify. */
+.ads-data-grid__unit {
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.ads-data-grid__caret {
   opacity: 0;
   font-size: 0.8rem;
   transition:
-    opacity 0.25s var(--ease),
-    transform 0.25s var(--ease);
+    opacity var(--dur-control) var(--ease),
+    transform var(--dur-control) var(--ease);
 }
 
-.caret.on {
+.ads-data-grid__caret.is-active {
   opacity: 1;
   color: var(--accent);
 }
 
-.caret.desc {
+.ads-data-grid__caret.is-desc {
   transform: rotate(180deg);
 }
 
-td {
+.ads-data-grid__row {
+  cursor: default;
+}
+
+.ads-data-grid__td {
   padding: 0 14px;
   height: var(--row-h);
+  text-align: left;
   color: var(--text-soft);
   border-top: 1px solid var(--line);
   white-space: nowrap;
 }
 
-td.end {
+.ads-data-grid__td.is-num {
   text-align: right;
 }
 
-tr.cursor td {
+.ads-data-grid__row.is-cursor .ads-data-grid__td {
   color: var(--text);
   background: var(--hover);
 }
@@ -178,24 +266,7 @@ tr.cursor td {
 /* The cursor bar is drawn as a box-shadow rather than a border, because a
    border on the focused row shrinks that row's content box and shifts every
    column by exactly its own width. */
-tr.cursor td:first-child {
+.ads-data-grid__row.is-cursor .ads-data-grid__td:first-child {
   box-shadow: inset 2px 0 0 var(--accent);
-}
-
-.grade {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  color: var(--text);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
 }
 </style>

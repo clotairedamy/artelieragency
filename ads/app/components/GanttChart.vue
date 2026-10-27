@@ -170,18 +170,18 @@ const elbows = computed(() =>
 </script>
 
 <template>
-  <div class="gantt card">
-    <header class="head">
+  <div class="ads-gantt-chart card">
+    <header class="ads-gantt-chart__head">
       <div>
         <span class="eyebrow">Typical engagement</span>
         <h3 class="h3">{{ durations.find((d) => d.weeks === weeks)?.label }}, start to handover</h3>
       </div>
-      <div class="segmented" role="group" aria-label="Engagement length">
+      <div class="ads-segmented" role="group" aria-label="Engagement length">
         <button
           v-for="d in durations"
           :key="d.weeks"
           type="button"
-          :class="{ on: weeks === d.weeks }"
+          :class="{ 'is-on': weeks === d.weeks }"
           :aria-pressed="weeks === d.weeks"
           @click="weeks = d.weeks"
         >
@@ -190,11 +190,11 @@ const elbows = computed(() =>
       </div>
     </header>
 
-    <div class="scroller">
-      <div class="chart">
+    <div class="ads-gantt-chart__scroller">
+      <div class="ads-gantt-chart__chart">
         <!-- Left column: the phase list -->
-        <div class="names">
-          <div class="col-head">
+        <div class="ads-gantt-chart__names">
+          <div class="ads-gantt-chart__col-head">
             <span class="eyebrow">Phase</span>
             <span class="eyebrow">Weeks</span>
           </div>
@@ -202,33 +202,33 @@ const elbows = computed(() =>
             v-for="(p, i) in phases"
             :key="p.name"
             type="button"
-            class="name-row"
-            :class="{ on: active.includes(p.name), picked: selected === i }"
+            class="ads-gantt-chart__name-row"
+            :class="{ 'is-active': active.includes(p.name), 'is-picked': selected === i }"
             :aria-expanded="selected === i"
             @click="selected = selected === i ? null : i"
           >
-            <span class="name">
+            <span class="ads-gantt-chart__name">
               {{ p.name }}
-              <span v-if="p.tech" class="tech num">{{ p.tech }}</span>
+              <span v-if="p.tech" class="ads-gantt-chart__tech num">{{ p.tech }}</span>
             </span>
-            <span class="weeks num">{{ weekRange(p) }}</span>
+            <span class="ads-gantt-chart__weeks num">{{ weekRange(p) }}</span>
           </button>
         </div>
 
         <!-- Right column: the timeline -->
-        <div class="lanes">
-          <TransitionGroup tag="div" name="col" class="col-head weeks-head">
+        <div class="ads-gantt-chart__lanes">
+          <TransitionGroup tag="div" name="ads-gantt-chart__col" class="ads-gantt-chart__col-head ads-gantt-chart__weeks-head">
             <span
               v-for="w in weekCols"
               :key="w"
-              class="week num"
+              class="ads-gantt-chart__week num"
               :style="{ width: pct(1 / weeks) }"
             >{{ w }}</span>
           </TransitionGroup>
 
           <div
             ref="track"
-            class="track"
+            class="ads-gantt-chart__track"
             :style="{ '--cols': weeks }"
             role="slider"
             tabindex="0"
@@ -245,51 +245,51 @@ const elbows = computed(() =>
             <span
               v-for="e in elbows"
               :key="e.key"
-              class="elbow-v"
+              class="ads-gantt-chart__elbow-v"
               :style="{ left: e.x, top: `${e.top}px`, height: `${e.height}px` }"
             />
             <span
               v-for="e in elbows"
               :key="`${e.key}-arm`"
-              class="elbow-h"
+              class="ads-gantt-chart__elbow-h"
               :style="{ left: e.x, top: `${e.armTop}px`, width: e.armWidth }"
             />
 
             <div
               v-for="(p, i) in phases"
               :key="p.name"
-              class="lane"
+              class="ads-gantt-chart__lane"
               :style="{ height: `${ROW}px` }"
             >
               <span
-                class="bar"
-                :class="{ on: active.includes(p.name), picked: selected === i }"
+                class="ads-gantt-chart__bar"
+                :class="{ 'is-active': active.includes(p.name), 'is-picked': selected === i }"
                 :style="{ left: pct(p.from), width: pct(p.to - p.from) }"
                 @click.stop="selected = selected === i ? null : i"
               >
-                <span class="bar-label">{{ p.tech || p.name }}</span>
+                <span class="ads-gantt-chart__bar-label">{{ p.tech || p.name }}</span>
               </span>
             </div>
 
             <!-- The scrub marker -->
-            <span class="marker" :style="{ left: pct(at) }">
-              <span class="flag num">wk {{ currentWeek }}</span>
+            <span class="ads-gantt-chart__marker" :style="{ left: pct(at) }">
+              <span class="ads-gantt-chart__flag num">wk {{ currentWeek }}</span>
             </span>
           </div>
         </div>
       </div>
     </div>
 
-    <footer class="foot">
-      <p class="body readout">
+    <footer class="ads-gantt-chart__foot">
+      <p class="body ads-gantt-chart__readout">
         <span class="eyebrow">Week {{ currentWeek }}</span>
-        <TransitionGroup tag="span" name="phase" class="active-list">
-          <span v-for="name in active" :key="name" class="active-item">{{ name }}</span>
+        <TransitionGroup tag="span" name="ads-gantt-chart__phase" class="ads-gantt-chart__active-list">
+          <span v-for="name in active" :key="name" class="ads-gantt-chart__active-item">{{ name }}</span>
           <span v-if="!active.length" key="none" class="dim">Nothing scheduled — drag the marker.</span>
         </TransitionGroup>
       </p>
-      <Transition name="detail">
-        <p v-if="selected !== null" class="body detail">
+      <Transition name="ads-gantt-chart__detail">
+        <p v-if="selected !== null" class="body ads-gantt-chart__detail">
           <strong>{{ phases[selected]!.name }}.</strong>
           {{ phases[selected]!.detail }}
         </p>
@@ -299,13 +299,13 @@ const elbows = computed(() =>
 </template>
 
 <style scoped>
-.gantt {
+.ads-gantt-chart {
   display: grid;
   gap: 22px;
   padding: clamp(20px, 3vw, 28px);
 }
 
-.head {
+.ads-gantt-chart__head {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -313,48 +313,15 @@ const elbows = computed(() =>
   gap: 16px;
 }
 
-.head .eyebrow {
+.ads-gantt-chart__head .eyebrow {
   margin-bottom: 7px;
-}
-
-/* ─── Length control ───────────────────────────────────────────────────── */
-
-.segmented {
-  display: grid;
-  grid-auto-flow: column;
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  box-shadow: var(--soft-inset-sm);
-}
-
-.segmented button {
-  padding: 8px 14px;
-  border-radius: calc(var(--radius-sm) - 4px);
-  font-size: 0.83rem;
-  color: var(--subdued);
-  white-space: nowrap;
-  transition:
-    color 0.25s var(--ease),
-    background 0.25s var(--ease);
-}
-
-.segmented button:hover {
-  color: var(--text);
-}
-
-.segmented button.on {
-  color: var(--accent-ink);
-  background: var(--accent);
-  box-shadow: var(--soft-raised-sm);
 }
 
 /* ─── Frame ────────────────────────────────────────────────────────────── */
 
 /* A Gantt cannot be made narrow enough for a phone without becoming useless,
    so below its minimum it scrolls sideways and the phase names stay put. */
-.scroller {
+.ads-gantt-chart__scroller {
   overflow-x: auto;
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -362,13 +329,13 @@ const elbows = computed(() =>
   padding: 4px;
 }
 
-.chart {
+.ads-gantt-chart__chart {
   display: grid;
   grid-template-columns: minmax(232px, 252px) minmax(430px, 1fr);
   min-width: 690px;
 }
 
-.col-head {
+.ads-gantt-chart__col-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -379,7 +346,7 @@ const elbows = computed(() =>
 
 /* ─── Phase list ───────────────────────────────────────────────────────── */
 
-.names {
+.ads-gantt-chart__names {
   position: sticky;
   left: 0;
   z-index: 3;
@@ -387,7 +354,7 @@ const elbows = computed(() =>
   border-right: 1px solid var(--line);
 }
 
-.name-row {
+.ads-gantt-chart__name-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -400,32 +367,32 @@ const elbows = computed(() =>
   color: var(--text-soft);
   border-bottom: 1px solid var(--line);
   transition:
-    color 0.25s var(--ease),
-    background 0.25s var(--ease),
-    box-shadow 0.25s var(--ease);
+    color var(--dur-control) var(--ease),
+    background var(--dur-control) var(--ease),
+    box-shadow var(--dur-control) var(--ease);
 }
 
-.name-row:last-child {
+.ads-gantt-chart__name-row:last-child {
   border-bottom: 0;
 }
 
-.name-row:hover {
+.ads-gantt-chart__name-row:hover {
   color: var(--text);
   background: var(--hover);
 }
 
 /* The phases running at the marker's position. */
-.name-row.on {
+.ads-gantt-chart__name-row.is-active {
   color: var(--text);
   box-shadow: inset 2px 0 0 var(--accent);
 }
 
-.name-row.picked {
+.ads-gantt-chart__name-row.is-picked {
   background: var(--raised);
   box-shadow: var(--soft-raised-sm);
 }
 
-.name {
+.ads-gantt-chart__name {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -435,7 +402,7 @@ const elbows = computed(() =>
   text-overflow: ellipsis;
 }
 
-.tech {
+.ads-gantt-chart__tech {
   font-size: 0.64rem;
   letter-spacing: 0.06em;
   padding: 2px 7px;
@@ -446,7 +413,7 @@ const elbows = computed(() =>
   flex: none;
 }
 
-.weeks {
+.ads-gantt-chart__weeks {
   font-size: 0.7rem;
   color: var(--subdued);
   flex: none;
@@ -454,11 +421,11 @@ const elbows = computed(() =>
 
 /* ─── Timeline ─────────────────────────────────────────────────────────── */
 
-.weeks-head {
+.ads-gantt-chart__weeks-head {
   padding: 0;
 }
 
-.week {
+.ads-gantt-chart__week {
   display: grid;
   place-items: center;
   font-size: 0.68rem;
@@ -466,7 +433,7 @@ const elbows = computed(() =>
   flex: none;
 }
 
-.track {
+.ads-gantt-chart__track {
   position: relative;
   /* Week gridlines, drawn rather than marked up — one element instead of
      twelve, and they resize with the column count. */
@@ -476,20 +443,20 @@ const elbows = computed(() =>
   touch-action: pan-y;
 }
 
-.track:focus-visible {
+.ads-gantt-chart__track:focus-visible {
   outline-offset: -2px;
 }
 
-.lane {
+.ads-gantt-chart__lane {
   position: relative;
   border-bottom: 1px solid var(--line);
 }
 
-.lane:last-of-type {
+.ads-gantt-chart__lane:last-of-type {
   border-bottom: 0;
 }
 
-.bar {
+.ads-gantt-chart__bar {
   position: absolute;
   top: 50%;
   translate: 0 -50%;
@@ -504,27 +471,27 @@ const elbows = computed(() =>
   cursor: pointer;
   overflow: hidden;
   transition:
-    background 0.3s var(--ease),
-    color 0.3s var(--ease),
-    box-shadow 0.3s var(--ease);
+    background var(--dur-control) var(--ease),
+    color var(--dur-control) var(--ease),
+    box-shadow var(--dur-control) var(--ease);
 }
 
-.bar:hover {
+.ads-gantt-chart__bar:hover {
   color: var(--text);
 }
 
 /* Running at the marker: the bar takes the accent. With no hue to spend,
    being the brightest thing in the row is the whole signal. */
-.bar.on {
+.ads-gantt-chart__bar.is-active {
   background: var(--accent);
   color: var(--accent-ink);
 }
 
-.bar.picked {
+.ads-gantt-chart__bar.is-picked {
   box-shadow: var(--soft-inset-sm);
 }
 
-.bar-label {
+.ads-gantt-chart__bar-label {
   font-family: var(--mono);
   font-size: 0.68rem;
   letter-spacing: 0.04em;
@@ -535,21 +502,21 @@ const elbows = computed(() =>
 
 /* ─── Elbows ───────────────────────────────────────────────────────────── */
 
-.elbow-v,
-.elbow-h {
+.ads-gantt-chart__elbow-v,
+.ads-gantt-chart__elbow-h {
   position: absolute;
   background: var(--subdued);
   opacity: 0.75;
   pointer-events: none;
 }
 
-.elbow-v {
+.ads-gantt-chart__elbow-v {
   width: 1px;
 }
 
 /* A dot where the connector meets the dependent row. A bare hairline reads
    as a stray gridline; the dot is what makes it read as an arrival. */
-.elbow-v::after {
+.ads-gantt-chart__elbow-v::after {
   content: '';
   position: absolute;
   bottom: -2px;
@@ -560,13 +527,13 @@ const elbows = computed(() =>
   background: var(--subdued);
 }
 
-.elbow-h {
+.ads-gantt-chart__elbow-h {
   height: 1px;
 }
 
 /* ─── Marker ───────────────────────────────────────────────────────────── */
 
-.marker {
+.ads-gantt-chart__marker {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -577,7 +544,7 @@ const elbows = computed(() =>
 
 /* A hairline is easy to lose against the gridlines, so the marker carries a
    soft glow of its own. */
-.marker::before {
+.ads-gantt-chart__marker::before {
   content: '';
   position: absolute;
   inset: 0 -6px;
@@ -586,7 +553,7 @@ const elbows = computed(() =>
   filter: blur(5px);
 }
 
-.flag {
+.ads-gantt-chart__flag {
   position: absolute;
   top: -31px;
   left: 50%;
@@ -601,7 +568,7 @@ const elbows = computed(() =>
 
 /* ─── Readout ──────────────────────────────────────────────────────────── */
 
-.foot {
+.ads-gantt-chart__foot {
   display: grid;
   gap: 12px;
 }
@@ -609,64 +576,64 @@ const elbows = computed(() =>
 /* Week columns, entering and leaving as the length changes. Absolute
    positioning on the leaving element keeps the remaining columns from
    jumping while it fades. */
-.col-enter-active,
-.col-leave-active {
+.ads-gantt-chart__col-enter-active,
+.ads-gantt-chart__col-leave-active {
   transition:
-    opacity 0.35s var(--ease),
-    transform 0.35s var(--ease);
+    opacity var(--dur-move) var(--ease),
+    transform var(--dur-move) var(--ease);
 }
 
-.col-enter-from,
-.col-leave-to {
+.ads-gantt-chart__col-enter-from,
+.ads-gantt-chart__col-leave-to {
   opacity: 0;
   transform: translateY(-6px);
 }
 
-.col-leave-active {
+.ads-gantt-chart__col-leave-active {
   position: absolute;
 }
 
 /* Phase names arriving and leaving as the marker is dragged. */
-.active-list {
+.ads-gantt-chart__active-list {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 8px;
   position: relative;
 }
 
-.active-item {
+.ads-gantt-chart__active-item {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.active-item:not(:last-child)::after {
+.ads-gantt-chart__active-item:not(:last-child)::after {
   content: '·';
   color: var(--subdued);
 }
 
-.phase-enter-active,
-.phase-leave-active {
+.ads-gantt-chart__phase-enter-active,
+.ads-gantt-chart__phase-leave-active {
   transition:
-    opacity 0.3s var(--ease),
-    transform 0.3s var(--ease);
+    opacity var(--dur-control) var(--ease),
+    transform var(--dur-control) var(--ease);
 }
 
-.phase-enter-from,
-.phase-leave-to {
+.ads-gantt-chart__phase-enter-from,
+.ads-gantt-chart__phase-leave-to {
   opacity: 0;
   transform: translateY(5px);
 }
 
-.phase-leave-active {
+.ads-gantt-chart__phase-leave-active {
   position: absolute;
 }
 
-.phase-move {
-  transition: transform 0.3s var(--ease);
+.ads-gantt-chart__phase-move {
+  transition: transform var(--dur-control) var(--ease);
 }
 
-.readout {
+.ads-gantt-chart__readout {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -676,7 +643,7 @@ const elbows = computed(() =>
   font-size: 0.88rem;
 }
 
-.detail {
+.ads-gantt-chart__detail {
   margin: 0;
   padding-top: 12px;
   border-top: 1px solid var(--line);
@@ -684,20 +651,20 @@ const elbows = computed(() =>
   max-width: 68ch;
 }
 
-.detail strong {
+.ads-gantt-chart__detail strong {
   color: var(--text);
   font-weight: 540;
 }
 
-.detail-enter-active,
-.detail-leave-active {
+.ads-gantt-chart__detail-enter-active,
+.ads-gantt-chart__detail-leave-active {
   transition:
-    opacity 0.3s var(--ease),
-    transform 0.3s var(--ease);
+    opacity var(--dur-control) var(--ease),
+    transform var(--dur-control) var(--ease);
 }
 
-.detail-enter-from,
-.detail-leave-to {
+.ads-gantt-chart__detail-enter-from,
+.ads-gantt-chart__detail-leave-to {
   opacity: 0;
   transform: translateY(-4px);
 }

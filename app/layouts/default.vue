@@ -1,6 +1,7 @@
 <template>
   <DashShell>
+    <template #tools><UiKitLaunch /></template>
     <slot />
-    <SiteFooter />
+    <StudioFooter />
   </DashShell>
 </template>

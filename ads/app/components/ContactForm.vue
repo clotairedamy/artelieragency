@@ -1,137 +1,143 @@
 <script setup lang="ts">
-// The contact form. This is the ADS version of a classic "contact sales"
-// form: the same fields, composed from AdsField / AdsChoice / AdsButton
-// instead of a pile of utility classes.
+// The contact form. The ADS version of a classic "contact sales" form,
+// composed from AdsField / AdsChoice / AdsButton.
+//
+// Every field has a visible label above it — a placeholder disappears exactly
+// when it is needed. The browser's own bubbles are switched off so each error
+// can say what to do rather than that something is wrong, sit under the field
+// it belongs to, and take focus. A failed send is not a toast: the reader
+// must act on it, so it would be a banner.
+export type ContactMessage = {
+  firstName: string
+  lastName: string
+  company: string
+  email: string
+  phone: string
+  message: string
+}
+
+withDefaults(defineProps<{ privacyTo?: string }>(), { privacyTo: '/privacy' })
+const emit = defineEmits<{ (e: 'submit', data: ContactMessage): void }>()
+
 const toast = useToast()
+const uid = useId()
+const root = ref<HTMLFormElement>()
 
-const form = reactive({
-  firstName: '',
-  lastName: '',
-  company: '',
-  email: '',
-  country: '',
-  phone: '',
-  message: '',
-  agree: false,
-})
-
+const blank = () => ({ firstName: '', lastName: '', company: '', email: '', phone: '', message: '', agree: false })
+const form = reactive(blank())
+const tried = ref(false)
 const submitting = ref(false)
 
-const countries = [
-  { label: 'US', value: 'US' },
-  { label: 'CA', value: 'CA' },
-  { label: 'EU', value: 'EU' },
-  { label: 'GB', value: 'GB' },
-]
+const errors = computed(() => {
+  if (!tried.value) return {} as Record<string, string>
+  const e: Record<string, string> = {}
+  if (!form.firstName.trim()) e.firstName = 'Enter your first name.'
+  if (!form.lastName.trim()) e.lastName = 'Enter your last name.'
+  if (!form.email.trim()) e.email = 'Enter your email address, so we can reply.'
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = 'Enter an email address like name@company.com.'
+  if (!form.message.trim()) e.message = 'Tell us what you need — a sentence or two is enough.'
+  if (!form.agree) e.agree = 'Tick the box to agree to the privacy policy, so we can keep your message.'
+  return e
+})
+
+const order = ['firstName', 'lastName', 'email', 'message', 'agree'] as const
+const fieldId = (key: string) => `${uid}-${key}`
 
 async function submit() {
+  tried.value = true
+  await nextTick()
+  const first = order.find((k) => errors.value[k])
+  if (first) {
+    const target = first === 'agree' ? root.value?.querySelector<HTMLElement>('.ads-contact-form__consent input') : document.getElementById(fieldId(first))
+    target?.focus()
+    return
+  }
   submitting.value = true
-  // Simulate a request; wire this to $fetch('/api/contact') in a real app.
+  const { agree: _agree, ...data } = form
+  emit('submit', { ...data })
+  // Simulated; wire the `submit` event to $fetch('/api/contact') in a real app.
   await new Promise((r) => setTimeout(r, 900))
   submitting.value = false
   toast.push('Message sent — we will reply within a day.', 'check')
-  Object.assign(form, { firstName: '', lastName: '', company: '', email: '', country: '', phone: '', message: '', agree: false })
+  Object.assign(form, blank())
+  tried.value = false
 }
 </script>
 
 <template>
-  <form class="form" @submit.prevent="submit">
-    <div class="grid-2">
-      <AdsField v-model="form.firstName" label="First name" name="first-name" autocomplete="given-name" required />
-      <AdsField v-model="form.lastName" label="Last name" name="last-name" autocomplete="family-name" required />
+  <form ref="root" class="ads-contact-form" novalidate @submit.prevent="submit">
+    <div class="ads-contact-form__row">
+      <AdsField :id="fieldId('firstName')" v-model="form.firstName" label="First name" name="first-name" autocomplete="given-name" :error="errors.firstName" required />
+      <AdsField :id="fieldId('lastName')" v-model="form.lastName" label="Last name" name="last-name" autocomplete="family-name" :error="errors.lastName" required />
     </div>
 
-    <AdsField v-model="form.company" label="Company" name="company" autocomplete="organization" />
+    <AdsField v-model="form.company" label="Company" name="company" autocomplete="organization" hint="Optional." />
 
-    <AdsField v-model="form.email" label="Email" type="email" name="email" autocomplete="email" required />
+    <AdsField :id="fieldId('email')" v-model="form.email" label="Email" type="email" name="email" autocomplete="email" :error="errors.email" required />
 
-    <div class="stack gap-2">
-      <span class="field-label">Phone number</span>
-      <div class="phone">
-        <select v-model="form.country" class="country" aria-label="Country">
-          <option v-for="c in countries" :key="c.value" :value="c.value">{{ c.label }}</option>
-        </select>
-        <input v-model="form.phone" type="tel" name="phone-number" autocomplete="tel" placeholder="123-456-7890" />
-      </div>
+    <AdsField
+      v-model="form.phone"
+      label="Phone number"
+      type="tel"
+      name="phone"
+      autocomplete="tel"
+      hint="Optional. Include the country code, e.g. +44 20 7946 0000."
+    />
+
+    <AdsField :id="fieldId('message')" v-model="form.message" label="Message" type="textarea" name="message" :rows="4" :error="errors.message" required />
+
+    <div class="ads-contact-form__consent">
+      <AdsChoice v-model="form.agree" kind="checkbox" label="I agree to the privacy policy">
+        I agree to the <NuxtLink :to="privacyTo" class="ads-link">privacy policy</NuxtLink>.
+      </AdsChoice>
+      <p v-if="errors.agree" class="ads-contact-form__error" role="alert">
+        <Icon name="alert" :size="14" />{{ errors.agree }}
+      </p>
     </div>
 
-    <AdsField v-model="form.message" label="Message" type="textarea" name="message" rows="4" />
-
-    <AdsChoice v-model="form.agree" kind="checkbox">
-      By selecting this, you agree to our
-      <NuxtLink to="/" class="ads-link">privacy policy</NuxtLink>.
-    </AdsChoice>
-
-    <div class="submit">
-      <AdsButton type="submit" variant="accent" :loading="submitting" icon="arrow" style="width: 100%">
-        Let&rsquo;s talk
-      </AdsButton>
-    </div>
+    <AdsButton type="submit" variant="accent" :loading="submitting" icon="arrow" class="ads-contact-form__submit">
+      Send message
+    </AdsButton>
   </form>
 </template>
 
 <style scoped>
-.form {
+.ads-contact-form {
   display: grid;
-  gap: 20px;
+  gap: var(--sp-5);
   width: 100%;
   max-width: 560px;
   margin-inline: auto;
 }
 
-.grid-2 {
+.ads-contact-form__row {
   display: grid;
-  gap: 20px;
+  gap: var(--sp-5);
 }
 
 @media (min-width: 640px) {
-  .grid-2 {
+  .ads-contact-form__row {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-.field-label {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text);
+.ads-contact-form__consent {
+  display: grid;
+  gap: var(--sp-2);
 }
 
-/* The phone field: a select and an input sharing one pressed well. */
-.phone {
+/* Same voice as a field's error: the words carry it, the glyph backs them up,
+   the colour is the third signal, not the first. */
+.ads-contact-form__error {
   display: flex;
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  box-shadow: var(--soft-inset);
-  overflow: hidden;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 0.76rem;
+  color: var(--bad);
 }
 
-.phone .country {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--subdued);
-  font: inherit;
-  font-size: 0.9rem;
-  padding: 11px 8px 11px 14px;
-  cursor: pointer;
-}
-
-.phone input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.92rem;
-  padding: 11px 14px 11px 8px;
-}
-
-.phone input::placeholder {
-  color: var(--subdued);
-}
-
-.submit {
-  margin-top: 6px;
+.ads-contact-form__submit {
+  width: 100%;
+  margin-top: var(--sp-1);
 }
 </style>

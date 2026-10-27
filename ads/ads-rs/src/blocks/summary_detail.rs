@@ -16,27 +16,28 @@ impl Rung {
     }
 }
 
-/// A ranked answer at the top, the reasoning one level down, the raw rows two
-/// levels down.
+/// Summary → detail: the pattern the whole system is arranged around. A ranked
+/// answer at the top, the reasoning one level down, the raw rows two levels
+/// down — and the reader never loses their place.
 #[component]
 pub fn SummaryDetail(
     #[props(into, optional)] rungs: Option<Vec<Rung>>,
 ) -> Element {
     let rungs = rungs.unwrap_or_else(|| {
         vec![
-            Rung::new("Answer.", "One ranked list."),
-            Rung::new("Reasoning.", "Why this ranks first."),
-            Rung::new("Evidence.", "The grid, filtered, with the filter visible as a tag."),
+            Rung::new("Answer.", "One ranked list. \"Fix the alt text on the blog template — 823 pages, two changes.\""),
+            Rung::new("Reasoning.", "An accordion or drawer: why this ranks first, what the score is made of."),
+            Rung::new("Evidence.", "The grid, filtered to the 823 rows, with the filter visible as a tag."),
         ]
     });
     rsx! {
-        ol { class: "ladder",
+        ol { class: "ads-summary-detail",
             for (i, r) in rungs.iter().enumerate() {
-                li { class: "rung",
-                    span { class: "num n", "{i + 1}" }
-                    p { class: "body",
-                        strong { "{r.title} " }
-                        "{r.body}"
+                li { key: "{i}", class: "ads-summary-detail__rung",
+                    span { class: "num ads-summary-detail__step", "aria-hidden": "true", "{i + 1}" }
+                    p { class: "ads-summary-detail__text",
+                        strong { "{r.title}" }
+                        " {r.body}"
                     }
                 }
             }

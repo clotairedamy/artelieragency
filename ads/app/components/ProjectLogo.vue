@@ -4,13 +4,13 @@ withDefaults(defineProps<{ word?: string; size?: number }>(), { word: 'A', size:
 </script>
 
 <template>
-  <span class="pl" :style="{ '--s': `${size}px` }">
-    <span class="pl-word">{{ word }}</span>
+  <span class="ads-project-logo" :style="{ '--s': `${size}px` }">
+    <span class="ads-project-logo__word">{{ word }}</span>
   </span>
 </template>
 
 <style scoped>
-.pl {
+.ads-project-logo {
   display: grid;
   place-items: center;
   flex: none;
@@ -23,7 +23,7 @@ withDefaults(defineProps<{ word?: string; size?: number }>(), { word: 'A', size:
   overflow: hidden;
 }
 
-.pl-word {
+.ads-project-logo__word {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: calc(var(--s) * 0.22);

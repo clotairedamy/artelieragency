@@ -1,26 +1,34 @@
-//! Toggle button and button group.
+//! Toggle button and toggle group: settings that flip and stay flipped,
+//! announced as pressed rather than painted in the accent.
 
 use dioxus::prelude::*;
 
 use crate::icons::Icon;
 
-/// A single toggle button — a setting that flips and stays that way.
+/// A single toggle button, for a setting that flips and stays that way. On is
+/// pressed into the page, not filled with the accent, because the accent is
+/// kept for the one thing to click. An icon-only toggle needs a `label`, since
+/// a glyph has no name of its own.
 #[component]
 pub fn AdsToggle(
-    #[props(optional)] checked: bool,
+    #[props(default = false)] checked: bool,
     #[props(into, optional)] icon: Option<String>,
     #[props(default = 16u32)] size: u32,
+    #[props(into, optional)] label: Option<String>,
     #[props(optional)] onchange: Option<EventHandler<bool>>,
     children: Element,
 ) -> Element {
+    let class = crate::class::join(&["ads-toggle", if checked { "is-on" } else { "" }]);
     rsx! {
         button {
             r#type: "button",
-            class: if checked { "ads-toggle is-on" } else { "ads-toggle" },
+            class: "{class}",
             "aria-pressed": if checked { "true" } else { "false" },
-            onclick: {
-                let h = onchange.clone();
-                move |_| { if let Some(h) = &h { h.call(!checked); } }
+            "aria-label": label,
+            onclick: move |_| {
+                if let Some(h) = &onchange {
+                    h.call(!checked);
+                }
             },
             if let Some(n) = &icon { Icon { name: n.clone(), size } }
             {children}
@@ -28,8 +36,8 @@ pub fn AdsToggle(
     }
 }
 
-/// A button group — a set of toggle buttons, several active at once.
-#[derive(Clone, PartialEq)]
+/// One option in a toggle group.
+#[derive(Clone, PartialEq, Debug)]
 pub struct ToggleOption {
     pub label: String,
     pub value: String,
@@ -42,31 +50,43 @@ impl ToggleOption {
     }
 }
 
+/// A set of toggle buttons, any number on at once. It is a labelled group so
+/// a screen reader says what the buttons are for before it reads them, and
+/// each button reports its own pressed state.
 #[component]
 pub fn AdsToggleGroup(
-    #[props(into)] options: Vec<ToggleOption>,
-    #[props(into, optional)] selected: Option<Vec<String>>,
+    #[props(into)] label: String,
+    options: Vec<ToggleOption>,
+    #[props(default)] selected: Vec<String>,
     #[props(optional)] onchange: Option<EventHandler<Vec<String>>>,
 ) -> Element {
-    let selected = selected.unwrap_or_default();
     rsx! {
-        div { class: "ads-segmented", role: "group",
-            for o in &options {
-                button {
-                    r#type: "button",
-                    class: if selected.contains(&o.value) { "is-on" } else { "" },
-                    "aria-pressed": if selected.contains(&o.value) { "true" } else { "false" },
-                    onclick: {
-                        let v = o.value.clone();
-                        let sel = selected.clone();
-                        let h = onchange.clone();
-                        move |_| {
-                            let mut next = sel.clone();
-                            if next.contains(&v) { next.retain(|x| x != &v); } else { next.push(v.clone()); }
-                            if let Some(h) = &h { h.call(next); }
+        div { class: "ads-toggle-group", role: "group", "aria-label": "{label}",
+            for o in options.iter() {
+                {
+                    let on = selected.contains(&o.value);
+                    let v = o.value.clone();
+                    let sel = selected.clone();
+                    rsx! {
+                        button {
+                            key: "{o.value}",
+                            r#type: "button",
+                            class: crate::class::join(&["ads-toggle-group__button", if on { "is-on" } else { "" }]),
+                            "aria-pressed": if on { "true" } else { "false" },
+                            onclick: move |_| {
+                                let mut next = sel.clone();
+                                if next.contains(&v) {
+                                    next.retain(|x| x != &v);
+                                } else {
+                                    next.push(v.clone());
+                                }
+                                if let Some(h) = &onchange {
+                                    h.call(next);
+                                }
+                            },
+                            "{o.label}"
                         }
-                    },
-                    "{o.label}"
+                    }
                 }
             }
         }

@@ -1,24 +1,35 @@
 <script setup lang="ts">
 // The frame tab: the selected rail item, cut from the frame's own surface and
 // reaching into the rail with concave fillets, so rail and content read as one
-// piece of material. Used once, for the single selected destination.
+// piece of material. Used once, for the single selected destination — which is
+// why `active` is one index, never a set.
 defineProps<{ items: string[]; active: number }>()
 </script>
 
 <template>
-  <div class="seam">
-    <div class="rail">
-      <span v-for="(item, i) in items" :key="item" class="row" :class="{ 'is-on': i === active }">
-        <span v-if="i === active" class="tab"><i class="fillet top" /><i class="fillet bottom" /></span>
-        <span class="label">{{ item }}</span>
+  <div class="ads-frame-tab">
+    <div class="ads-frame-tab__rail">
+      <span
+        v-for="(item, i) in items"
+        :key="item"
+        class="ads-frame-tab__row"
+        :class="{ 'is-on': i === active }"
+        :aria-current="i === active ? 'page' : undefined"
+      >
+        <span v-if="i === active" class="ads-frame-tab__tab" aria-hidden="true">
+          <i class="ads-frame-tab__fillet is-top" /><i class="ads-frame-tab__fillet is-bottom" />
+        </span>
+        <span class="ads-frame-tab__label">{{ item }}</span>
       </span>
     </div>
-    <div class="frame"><slot>Content</slot></div>
+    <div class="ads-frame-tab__frame"><slot>Content</slot></div>
   </div>
 </template>
 
 <style scoped>
-.seam {
+.ads-frame-tab {
+  /* The concave corner the tab reaches into the rail with. */
+  --fillet: var(--sp-3);
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
   min-height: 170px;
@@ -28,64 +39,65 @@ defineProps<{ items: string[]; active: number }>()
   width: 100%;
 }
 
-.rail {
+.ads-frame-tab__rail {
   display: grid;
   align-content: center;
   gap: 2px;
-  padding: 14px 0;
+  padding: var(--sp-3) 0;
   position: relative;
 }
 
-.row {
+.ads-frame-tab__row {
   position: relative;
   display: flex;
   align-items: center;
   height: 44px;
-  padding-left: 18px;
+  padding-left: var(--sp-4);
   font-size: 0.88rem;
   color: var(--subdued);
 }
 
-.row.is-on {
+.ads-frame-tab__row.is-on {
   color: var(--text);
   font-weight: 600;
 }
 
-.label {
+.ads-frame-tab__label {
   position: relative;
   z-index: 1;
 }
 
-.tab {
+.ads-frame-tab__tab {
   position: absolute;
-  inset: 0 -2px 0 8px;
-  border-radius: 16px 0 0 16px;
+  inset: 0 -2px 0 var(--sp-2);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
   background: var(--surface);
 }
 
-.fillet {
+.ads-frame-tab__fillet {
   position: absolute;
   right: 0;
-  width: 12px;
-  height: 12px;
+  width: var(--fillet);
+  height: var(--fillet);
 }
 
-.fillet.top {
-  top: -12px;
-  background: radial-gradient(circle 12px at top left, transparent 12px, var(--surface) 12px);
+/* The radial gradients are a mask that cuts the concave corner — shape, not
+   decoration, which is the one job a gradient is allowed here. */
+.ads-frame-tab__fillet.is-top {
+  top: calc(var(--fillet) * -1);
+  background: radial-gradient(circle var(--fillet) at top left, transparent var(--fillet), var(--surface) var(--fillet));
 }
 
-.fillet.bottom {
-  bottom: -12px;
-  background: radial-gradient(circle 12px at bottom left, transparent 12px, var(--surface) 12px);
+.ads-frame-tab__fillet.is-bottom {
+  bottom: calc(var(--fillet) * -1);
+  background: radial-gradient(circle var(--fillet) at bottom left, transparent var(--fillet), var(--surface) var(--fillet));
 }
 
-.frame {
+.ads-frame-tab__frame {
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: var(--sp-5);
   background: var(--surface);
-  border-radius: 0;
   color: var(--subdued);
   font-size: 0.9rem;
 }

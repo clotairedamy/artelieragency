@@ -30,6 +30,33 @@ body {
   overflow-x: hidden;
 }
 
+/* The phone menu sheet is up: the page underneath holds still. */
+html.sheet-open {
+  overflow: hidden;
+}
+
+/* Theme switch: the new theme spreads out as a circle from the button that
+   asked for it (--vt-x/--vt-y, set by useTheme), over a frozen copy of the
+   old one. useTheme skips the transition under reduced motion. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: ads-theme-reveal var(--dur-enter) var(--ease);
+}
+
+@keyframes ads-theme-reveal {
+  from {
+    clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 0));
+  }
+  to {
+    clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 0));
+  }
+}
+
 /* No scrollbars anywhere. Everything still scrolls; nothing paints a track. */
 * {
   scrollbar-width: none;
@@ -130,7 +157,7 @@ pre {
 
 .eyebrow {
   display: inline-block;
-  font-family: var(--mono);
+  font-family: var(--font-label);
   font-size: 0.68rem;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -182,8 +209,8 @@ pre {
 /* Hover presses the card into the page rather than lifting it. */
 .card-press {
   transition:
-    box-shadow 0.4s var(--ease),
-    transform 0.4s var(--ease);
+    box-shadow var(--dur-move) var(--ease),
+    transform var(--dur-move) var(--ease);
 }
 
 .card-press:hover,
@@ -207,9 +234,9 @@ pre {
   background: var(--raised);
   box-shadow: var(--soft-raised-sm);
   transition:
-    box-shadow 0.28s var(--ease),
-    color 0.28s var(--ease),
-    transform 0.28s var(--ease);
+    box-shadow var(--dur-control) var(--ease),
+    color var(--dur-control) var(--ease),
+    transform var(--dur-control) var(--ease);
   white-space: nowrap;
 }
 
@@ -331,8 +358,8 @@ pre {
   opacity: 1;
   transform: none;
   transition:
-    opacity 0.75s var(--ease),
-    transform 0.75s var(--ease);
+    opacity var(--dur-enter) var(--ease),
+    transform var(--dur-enter) var(--ease);
 }
 
 /* ─── Page transition ──────────────────────────────────────────────────── */
@@ -340,8 +367,8 @@ pre {
 .page-enter-active,
 .page-leave-active {
   transition:
-    opacity 0.28s var(--ease),
-    transform 0.28s var(--ease);
+    opacity var(--dur-control) var(--ease),
+    transform var(--dur-control) var(--ease);
 }
 
 .page-enter-from {

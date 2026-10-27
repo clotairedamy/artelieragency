@@ -2,28 +2,44 @@
 const open = ref(false)
 const toast = useToast()
 
-const emptyCode = `<AdsEmpty icon="discovery" title="Nothing here yet" body="Add your first project." />`
+const emptyCode = `<!-- Never had data: the action creates something. -->
+<AdsEmpty kind="first-run" title="No crawls yet" body="Results appear here once a crawl has finished.">
+  <AdsButton variant="accent" icon="plus">New crawl</AdsButton>
+</AdsEmpty>
+
+<!-- A filter matched nothing: the action clears it. -->
+<AdsEmpty kind="no-results" title="No pages match these filters" body="Nothing in this crawl is both 4xx and indexable.">
+  <AdsButton>Clear filters</AdsButton>
+</AdsEmpty>`
 
 const skeletonCode = `<AdsSkeleton width="100%" height="16px" />`
 
 const loadingCode = `<AdsLoading text="Recrawling 311 URLs…" />`
 
-const bannerCode = `<AdsBanner icon="alert" text="Your trial ends in 3 days." />`
+const bannerCode = `<AdsBanner text="This crawl is 14 days old. Figures describe the site as it was on 2026-10-11." />
+<AdsBanner tone="bad" text="The last export failed: the sitemap could not be read.">
+  <template #actions><AdsButton size="sm">Retry export</AdsButton></template>
+</AdsBanner>`
 
 const toastCode = `// app.vue
 <AdsToastHost />
 
-// anywhere
+// anywhere — for something that already happened
 const toast = useToast()
-toast.push('Copied', 'check')`
+toast.push('Export finished · 733 rows', 'check')
+
+// An error the reader must act on is a banner, not a toast:
+// useToast() has no error glyph to give it.`
 
 const modalCode = `const open = ref(false)
-<AdsModal v-model="open" title="Confirm">
-  <p>Are you sure?</p>
+<AdsModal v-model:open="open" title="Delete this project?">
+  <p>Its crawls, history and comparisons go with it. This cannot be undone.</p>
+  <AdsButton destructive @click="remove">Delete project</AdsButton>
+  <AdsButton variant="quiet" @click="open = false">Cancel</AdsButton>
 </AdsModal>`
 
-const tooltipCode = `<AdsTooltip text="Copies to clipboard">
-  <AdsIconButton icon="code" label="Copy" />
+const tooltipCode = `<AdsTooltip text="Copies the embed code to the clipboard">
+  <AdsIconButton icon="code" label="Copy embed code" />
 </AdsTooltip>`
 
 const drawerCode = `<AdsDrawer>
@@ -46,12 +62,17 @@ const drawerCode = `<AdsDrawer>
       description="The first screen every new user sees, so it gets a component rather than a grey sentence."
       :code="emptyCode"
       :props="[
-        { name: 'icon', type: 'string', default: 'discovery' },
+        { name: 'kind', type: 'first-run | no-results', default: 'first-run', desc: 'Never had data, or a filter matched nothing. Different glyph, different copy, different action.' },
+        { name: 'icon', type: 'string', default: 'by kind', desc: 'discovery (first-run) / compass (no-results).' },
         { name: 'title', type: 'string', default: '—' },
         { name: 'body', type: 'string', default: '' },
+        { name: 'default slot', type: 'action', default: '—', desc: 'The action that fills it. Expected — warns in development when missing.' },
       ]"
     >
-      <div class="block"><AdsEmpty icon="discovery" title="Nothing here yet" body="Add your first project and it will show up here."><AdsButton size="sm" variant="accent" icon="plus">New project</AdsButton></AdsEmpty></div>
+      <div class="block stack gap-4">
+        <AdsEmpty kind="first-run" title="No crawls yet" body="Results, issues and the ranked plan all appear here once a crawl has finished."><AdsButton size="sm" variant="accent" icon="plus">New crawl</AdsButton></AdsEmpty>
+        <AdsEmpty kind="no-results" title="No pages match these filters" body="Nothing in this crawl is both 4xx and indexable."><AdsButton size="sm">Clear filters</AdsButton></AdsEmpty>
+      </div>
     </ComponentDoc>
 
     <ComponentDoc
@@ -72,7 +93,10 @@ const drawerCode = `<AdsDrawer>
       name="AdsLoading"
       description="For the cases a skeleton cannot cover: an action in flight, or a panel whose shape is not known until the data arrives."
       :code="loadingCode"
-      :props="[{ name: 'text', type: 'string', default: '' }]"
+      :props="[
+        { name: 'text', type: 'string', default: '— (required)', desc: 'What is loading. A spinner alone tells nobody anything.' },
+        { name: 'size', type: 'number', default: '18' },
+      ]"
     >
       <AdsLoading text="Recrawling 311 URLs…" />
       <AdsButton loading>Exporting</AdsButton>
@@ -81,42 +105,50 @@ const drawerCode = `<AdsDrawer>
     <ComponentDoc
       id="adsbanner"
       name="AdsBanner"
-      description="A callout with a glyph and an accent edge."
+      description="A condition that persists, and stays until it is resolved — the place for an error the reader must act on. The glyph and a word carry the state, so it survives without its colour."
       :code="bannerCode"
       :props="[
         { name: 'text', type: 'string', default: '—' },
-        { name: 'icon', type: 'string', default: 'alert' },
+        { name: 'tone', type: 'info | warn | bad', default: 'info', desc: 'bad is announced as an alert.' },
+        { name: 'icon', type: 'string', default: 'by tone', desc: 'signal (info) / alert (warn, bad).' },
+        { name: '#actions', type: 'slot', default: '—', desc: 'The action that resolves it.' },
       ]"
     >
-      <div class="block"><AdsBanner icon="alert" text="Your trial ends in 3 days. Add a payment method to keep going." /></div>
+      <div class="block stack gap-3">
+        <AdsBanner text="This crawl is 14 days old. Figures describe the site as it was on 2026-10-11." />
+        <AdsBanner tone="bad" text="The last export failed: the sitemap could not be read."><template #actions><AdsButton size="sm">Retry export</AdsButton></template></AdsBanner>
+      </div>
     </ComponentDoc>
 
     <ComponentDoc
       id="adstoast"
       name="AdsToastHost"
-      description="Mount once, then call useToast().push() from anywhere."
+      description="Confirms something that already happened, then leaves. Mount once, then call useToast().push(text, icon?) from anywhere. Never for an error the reader must act on — that is a banner."
       :code="toastCode"
+      :props="[
+        { name: 'push(text, icon?)', type: 'icon: check | mail | code | arrow | layers', default: 'check', desc: 'No error glyph, by design.' },
+      ]"
     >
-      <AdsButton icon="check" @click="toast.push('Saved', 'check')">Show a toast</AdsButton>
+      <AdsButton icon="check" @click="toast.push('Export finished · 733 rows', 'check')">Export CSV</AdsButton>
     </ComponentDoc>
 
     <ComponentDoc
       id="adsmodal"
       name="AdsModal"
-      description="A modal on a scrim. Closes on Escape and scrim click; focus moves in."
+      description="Blocks everything until answered, so it is kept for decisions that cannot wait — a destructive confirmation, with the verb on a default-weight button, never the accent. Row detail is a drawer. Closes on Escape and scrim click; focus moves in, stays in, and returns."
       :code="modalCode"
       :props="[
-        { name: 'open', type: 'boolean (v-model)', default: 'false' },
-        { name: 'title', type: 'string', default: '' },
+        { name: 'open', type: 'boolean (v-model:open)', default: 'false' },
+        { name: 'title', type: 'string', default: '— (required)', desc: 'Names the dialog (aria-labelledby).' },
         { name: 'width', type: 'string', default: '', desc: 'CSS max-width override.' },
       ]"
     >
-      <AdsButton @click="open = true">Open modal</AdsButton>
-      <AdsModal v-model="open" title="Confirm">
-        <p class="ink-subdued mar-b-4">This action cannot be undone.</p>
+      <AdsButton @click="open = true">Delete project…</AdsButton>
+      <AdsModal v-model:open="open" title="Delete this project?">
+        <p class="ink-subdued mar-b-4">Its crawls, history and comparisons go with it. This cannot be undone.</p>
         <div class="row gap-3">
-          <AdsButton @click="open = false">Cancel</AdsButton>
-          <AdsButton variant="accent" @click="open = false">Confirm</AdsButton>
+          <AdsButton destructive @click="open = false">Delete project</AdsButton>
+          <AdsButton variant="quiet" @click="open = false">Cancel</AdsButton>
         </div>
       </AdsModal>
     </ComponentDoc>
@@ -124,14 +156,14 @@ const drawerCode = `<AdsDrawer>
     <ComponentDoc
       id="adstooltip"
       name="AdsTooltip"
-      description="A bubble on hover/focus. The trigger is the default slot."
+      description="Answers a question only if asked: on hover or focus, described to assistive tech, dismissed with Escape. The trigger is the default slot. Never the only way to learn what a control does."
       :code="tooltipCode"
       :props="[
         { name: 'text', type: 'string', default: '—' },
         { name: 'position', type: 'top | bottom', default: 'top' },
       ]"
     >
-      <AdsTooltip text="Copies to clipboard"><AdsIconButton icon="code" label="Copy" /></AdsTooltip>
+      <AdsTooltip text="Copies the embed code to the clipboard"><AdsIconButton icon="code" label="Copy embed code" /></AdsTooltip>
     </ComponentDoc>
 
     <ComponentDoc

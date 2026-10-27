@@ -1,10 +1,22 @@
 <script setup lang="ts">
-// The closing call to action. A single raised card with the one accent button.
+// The close, shaped like the studio site's: one raised panel — label,
+// headline, a lede that says what happens next — and one filled action in
+// it. Everything above should have spent its accent carefully so that this
+// button is the brightest thing on the page by the time anyone reaches it.
+// The secondary action stays default weight.
 withDefaults(
-  defineProps<{ title?: string; body?: string; ctaLabel?: string; ctaTo?: string; secondaryLabel?: string; secondaryTo?: string }>(),
+  defineProps<{
+    eyebrow?: string
+    title: string
+    body?: string
+    ctaLabel?: string
+    ctaTo?: string
+    secondaryLabel?: string
+    secondaryTo?: string
+  }>(),
   {
-    title: 'Build the dashboard your users live in.',
-    body: 'A monochrome soft-UI kit: tokens, utilities, sections and a dashboard — ready to drop into a Nuxt project.',
+    eyebrow: '',
+    body: '',
     ctaLabel: 'Start a project',
     ctaTo: '/contact',
     secondaryLabel: '',
@@ -14,16 +26,18 @@ withDefaults(
 </script>
 
 <template>
-  <section class="section">
-    <div class="max inner">
-      <div class="cta card">
-        <div class="copy">
-          <h2 class="title">{{ title }}</h2>
-          <p class="body">{{ body }}</p>
-          <div class="buttons">
-            <NuxtLink :to="ctaTo" class="btn btn-accent">{{ ctaLabel }}</NuxtLink>
-            <NuxtLink v-if="secondaryLabel" :to="secondaryTo" class="btn btn-quiet">{{ secondaryLabel }}</NuxtLink>
-          </div>
+  <section class="ads-cta-band">
+    <div class="ads-cta-band__inner max">
+      <div class="ads-cta-band__panel card">
+        <span v-if="eyebrow" class="eyebrow">{{ eyebrow }}</span>
+        <h2 class="ads-cta-band__title h2">{{ title }}</h2>
+        <p v-if="body" class="lede ads-cta-band__body">{{ body }}</p>
+        <div class="ads-cta-band__actions">
+          <NuxtLink :to="ctaTo" class="btn btn-accent">
+            {{ ctaLabel }}
+            <Icon name="arrow" :size="18" />
+          </NuxtLink>
+          <NuxtLink v-if="secondaryLabel && secondaryTo" :to="secondaryTo" class="btn">{{ secondaryLabel }}</NuxtLink>
         </div>
       </div>
     </div>
@@ -31,45 +45,33 @@ withDefaults(
 </template>
 
 <style scoped>
-.section {
-  padding: 64px 0 96px;
+.ads-cta-band {
+  padding: var(--sp-7) 0 var(--sp-8);
 }
 
-.inner {
+.ads-cta-band__inner {
   padding: 0 clamp(20px, 4vw, 48px);
 }
 
-.cta {
-  padding: clamp(32px, 6vw, 64px);
+.ads-cta-band__panel {
   display: grid;
-  justify-items: center;
-  text-align: center;
-  border-radius: var(--radius-lg);
+  gap: var(--sp-4);
+  justify-items: start;
+  padding: clamp(28px, 5vw, 52px);
 }
 
-.copy {
-  display: grid;
-  gap: 18px;
-  justify-items: center;
-  max-width: 560px;
+.ads-cta-band__title {
+  font-family: var(--font-display);
 }
 
-.title {
-  font-size: clamp(1.9rem, 4vw, 2.7rem);
-  letter-spacing: -0.028em;
-  font-weight: 540;
+.ads-cta-band__body {
+  max-width: 56ch;
 }
 
-.body {
-  color: var(--subdued);
-  font-size: 1rem;
-}
-
-.buttons {
+.ads-cta-band__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  justify-content: center;
-  margin-top: 8px;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
 }
 </style>

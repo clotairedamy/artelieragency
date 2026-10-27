@@ -5,7 +5,7 @@
 // on this one it is also the fastest way around — every section of the page
 // you are on, every page, and the handful of actions worth a shortcut, behind
 // one text field that filters as you type.
-import type { Section } from '~/composables/useOverlays'
+import type { Section } from '../composables/useOverlays'
 
 const props = defineProps<{ sections: Section[] }>()
 
@@ -22,15 +22,20 @@ const cursor = ref(0)
 const input = ref<HTMLInputElement>()
 const list = ref<HTMLElement>()
 
+// Jumps are instant for anyone who has asked the system for less motion.
+const behavior = (): ScrollBehavior =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+
 const commands = computed<Command[]>(() => [
   ...props.sections.map((s) => ({
     id: `s-${s.id}`,
     group: 'Jump to',
     label: s.label,
     icon: s.icon,
-    hint: 'section',
+    hint: s.to ?? 'section',
     run: () => {
-      document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' })
+      if (s.to) return router.push(s.to)
+      document.getElementById(s.id)?.scrollIntoView({ behavior: behavior() })
       history.replaceState(null, '', `#${s.id}`)
     },
   })),
@@ -70,7 +75,7 @@ const commands = computed<Command[]>(() => [
     group: 'Actions',
     label: 'Back to top',
     icon: 'growth',
-    run: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+    run: () => window.scrollTo({ top: 0, behavior: behavior() }),
   },
 ])
 
@@ -101,8 +106,16 @@ const groups = computed(() => {
 
 watch(query, () => (cursor.value = 0))
 
+// Focus goes to the field on open and back to whatever opened the palette on
+// close, so a keyboard user ends up where they started.
+let opener: HTMLElement | null = null
 watch(open, async (v) => {
-  if (!v) return
+  if (!v) {
+    if (opener?.isConnected) opener.focus({ preventScroll: true })
+    opener = null
+    return
+  }
+  opener = document.activeElement as HTMLElement | null
   query.value = ''
   cursor.value = 0
   await nextTick()
@@ -144,17 +157,17 @@ watch(cursor, async () => {
 
 <template>
   <Teleport to="body">
-    <Transition name="palette">
-      <div v-if="open" class="scrim" @mousedown.self="close">
-        <div class="palette" role="dialog" aria-modal="true" aria-label="Command palette" @keydown="onKey">
-          <div class="field">
+    <Transition name="ads-command-palette__pop">
+      <div v-if="open" class="ads-command-palette" @mousedown.self="close">
+        <div class="ads-command-palette__dialog" role="dialog" aria-modal="true" aria-label="Command palette" @keydown="onKey">
+          <div class="ads-command-palette__field">
             <Icon name="discovery" :size="20" />
             <input
               ref="input"
               v-model="query"
               type="text"
               placeholder="Search sections, pages and actions…"
-              aria-label="Search"
+              aria-label="Search sections, pages and actions"
               role="combobox"
               aria-expanded="true"
               aria-controls="palette-list"
@@ -165,32 +178,32 @@ watch(cursor, async () => {
             <kbd class="kbd">esc</kbd>
           </div>
 
-          <div id="palette-list" ref="list" class="results" role="listbox">
-            <template v-for="g in groups" :key="g.name">
-              <p class="group eyebrow">{{ g.name }}</p>
+          <div id="palette-list" ref="list" class="ads-command-palette__results" role="listbox" aria-label="Results">
+            <div v-for="g in groups" :key="g.name" role="group" :aria-label="g.name">
+              <p class="eyebrow ads-command-palette__group" aria-hidden="true">{{ g.name }}</p>
               <button
                 v-for="c in g.items"
                 :id="`cmd-${c.id}`"
                 :key="c.id"
                 type="button"
                 role="option"
-                class="row"
+                class="ads-command-palette__row"
                 :aria-selected="c.index === cursor"
                 @mousemove="cursor = c.index"
                 @click="run(c)"
               >
-                <span class="row-icon"><Icon :name="c.icon" :size="18" /></span>
-                <span class="row-label">{{ c.label }}</span>
-                <span v-if="c.hint" class="row-hint num">{{ c.hint }}</span>
+                <span class="ads-command-palette__row-icon"><Icon :name="c.icon" :size="18" /></span>
+                <span class="ads-command-palette__row-label">{{ c.label }}</span>
+                <span v-if="c.hint" class="ads-command-palette__row-hint num">{{ c.hint }}</span>
               </button>
-            </template>
-            <p v-if="!results.length" class="empty body">Nothing matches “{{ query }}”.</p>
+            </div>
+            <p v-if="!results.length" class="body ads-command-palette__empty">Nothing matches “{{ query }}”.</p>
           </div>
 
-          <div class="foot num">
+          <div class="ads-command-palette__foot num">
             <span><kbd class="kbd">↑</kbd><kbd class="kbd">↓</kbd> move</span>
             <span><kbd class="kbd">↵</kbd> open</span>
-            <span class="count">{{ results.length }} results</span>
+            <span class="ads-command-palette__count" aria-live="polite">{{ results.length }} {{ results.length === 1 ? 'result' : 'results' }}</span>
           </div>
         </div>
       </div>
@@ -199,20 +212,20 @@ watch(cursor, async () => {
 </template>
 
 <style scoped>
-.scrim {
+.ads-command-palette {
   position: fixed;
   inset: 0;
   z-index: 100;
   display: grid;
   justify-items: center;
   align-items: start;
-  padding: min(14vh, 120px) 16px 16px;
+  padding: min(14vh, 120px) var(--sp-4) var(--sp-4);
   background: rgb(10 10 12 / 0.32);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
 
-.palette {
+.ads-command-palette__dialog {
   width: min(620px, 100%);
   max-height: min(560px, 76vh);
   display: grid;
@@ -223,11 +236,11 @@ watch(cursor, async () => {
   overflow: hidden;
 }
 
-.field {
+.ads-command-palette__field {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 12px;
+  gap: var(--sp-3);
+  margin: var(--sp-3);
   padding: 0 14px;
   height: 52px;
   border-radius: var(--radius-sm);
@@ -236,7 +249,7 @@ watch(cursor, async () => {
   color: var(--subdued);
 }
 
-.field input {
+.ads-command-palette__field input {
   flex: 1;
   min-width: 0;
   height: 100%;
@@ -248,42 +261,42 @@ watch(cursor, async () => {
   color: var(--text);
 }
 
-.field input::placeholder {
+.ads-command-palette__field input::placeholder {
   color: var(--subdued);
 }
 
-.results {
+.ads-command-palette__results {
   overflow-y: auto;
-  padding: 2px 8px 8px;
+  padding: 2px var(--sp-2) var(--sp-2);
   overscroll-behavior: contain;
 }
 
-.group {
-  margin: 12px 12px 6px;
+.ads-command-palette__group {
+  margin: var(--sp-3) var(--sp-3) 6px;
   font-size: 0.6rem;
 }
 
-.row {
+.ads-command-palette__row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--sp-3);
   width: 100%;
-  padding: 8px 12px 8px 8px;
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
   border-radius: 12px;
   color: var(--text-soft);
   text-align: left;
   transition:
-    background 0.18s var(--ease),
-    color 0.18s var(--ease);
+    background var(--dur-control) var(--ease),
+    color var(--dur-control) var(--ease);
 }
 
-.row[aria-selected='true'] {
+.ads-command-palette__row[aria-selected='true'] {
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--soft-inset-sm);
 }
 
-.row-icon {
+.ads-command-palette__row-icon {
   display: grid;
   place-items: center;
   width: 34px;
@@ -294,13 +307,13 @@ watch(cursor, async () => {
   box-shadow: var(--soft-raised-sm);
 }
 
-.row-label {
+.ads-command-palette__row-label {
   flex: 1;
   font-size: 0.93rem;
   font-weight: 500;
 }
 
-.row-hint {
+.ads-command-palette__row-hint {
   font-size: 0.7rem;
   color: var(--subdued);
   overflow: hidden;
@@ -309,55 +322,55 @@ watch(cursor, async () => {
   max-width: 40%;
 }
 
-.empty {
-  padding: 28px 12px;
+.ads-command-palette__empty {
+  padding: 28px var(--sp-3);
   text-align: center;
 }
 
-.foot {
+.ads-command-palette__foot {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--sp-4);
   padding: 10px 18px;
   border-top: 1px solid var(--line);
   font-size: 0.7rem;
   color: var(--subdued);
 }
 
-.foot .kbd {
-  margin-right: 4px;
+.ads-command-palette__foot .kbd {
+  margin-right: var(--sp-1);
 }
 
-.count {
+.ads-command-palette__count {
   margin-left: auto;
 }
 
 @media (max-width: 640px) {
-  .scrim {
-    padding-top: 12px;
+  .ads-command-palette {
+    padding-top: var(--sp-3);
   }
-  .foot span:not(.count) {
+  .ads-command-palette__foot span:not(.ads-command-palette__count) {
     display: none;
   }
 }
 
-.palette-enter-active,
-.palette-leave-active {
-  transition: opacity 0.22s var(--ease);
+.ads-command-palette__pop-enter-active,
+.ads-command-palette__pop-leave-active {
+  transition: opacity var(--dur-control) var(--ease);
 }
 
-.palette-enter-active .palette,
-.palette-leave-active .palette {
-  transition: transform 0.28s var(--ease);
+.ads-command-palette__pop-enter-active .ads-command-palette__dialog,
+.ads-command-palette__pop-leave-active .ads-command-palette__dialog {
+  transition: transform var(--dur-control) var(--ease);
 }
 
-.palette-enter-from,
-.palette-leave-to {
+.ads-command-palette__pop-enter-from,
+.ads-command-palette__pop-leave-to {
   opacity: 0;
 }
 
-.palette-enter-from .palette,
-.palette-leave-to .palette {
+.ads-command-palette__pop-enter-from .ads-command-palette__dialog,
+.ads-command-palette__pop-leave-to .ads-command-palette__dialog {
   transform: translateY(-8px) scale(0.98);
 }
 </style>

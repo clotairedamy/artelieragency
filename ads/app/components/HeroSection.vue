@@ -1,6 +1,10 @@
 <script setup lang="ts">
 // The hero: a big display headline over a soft visual. The visual is a slot,
 // so the landing page can drop in a chart or a dashboard mock.
+//
+// Actions are a slot too, but they follow the studio's hero: one accent link
+// on the action the page exists for, a default one beside it. If the nav or
+// anything else above the fold already spends the accent, this does not.
 withDefaults(
   defineProps<{ eyebrow?: string; title: string; lead?: string; align?: 'center' | 'left' }>(),
   { eyebrow: '', lead: '', align: 'center' },
@@ -8,17 +12,17 @@ withDefaults(
 </script>
 
 <template>
-  <section class="hero">
-    <div class="max inner" :class="{ 'is-center': align === 'center' }">
-      <div class="copy">
+  <section class="ads-hero-section">
+    <div class="ads-hero-section__inner max" :class="{ 'is-center': align === 'center' }">
+      <div class="ads-hero-section__copy">
         <p v-if="eyebrow" class="eyebrow">{{ eyebrow }}</p>
-        <h1 class="title face-display">{{ title }}</h1>
-        <p v-if="lead" class="lede">{{ lead }}</p>
-        <div class="actions">
+        <h1 class="ads-hero-section__title">{{ title }}</h1>
+        <p v-if="lead" class="lede ads-hero-section__lead">{{ lead }}</p>
+        <div v-if="$slots.actions" class="ads-hero-section__actions">
           <slot name="actions" />
         </div>
       </div>
-      <div v-if="$slots.visual" class="visual">
+      <div v-if="$slots.visual" class="ads-hero-section__visual">
         <slot name="visual" />
       </div>
     </div>
@@ -26,55 +30,56 @@ withDefaults(
 </template>
 
 <style scoped>
-.hero {
-  padding: clamp(56px, 9vw, 120px) 0 40px;
+.ads-hero-section {
+  padding: clamp(56px, 9vw, 120px) 0 var(--sp-7);
 }
 
-.inner {
+.ads-hero-section__inner {
   display: grid;
-  gap: 48px;
+  gap: var(--sp-7);
   padding: 0 clamp(20px, 4vw, 48px);
 }
 
-.inner.is-center {
+.ads-hero-section__inner.is-center {
   justify-items: center;
   text-align: center;
 }
 
-.copy {
+.ads-hero-section__copy {
   display: grid;
-  gap: 20px;
-  justify-items: var(--justify, start);
+  gap: var(--sp-4);
+  justify-items: start;
   max-width: 720px;
 }
 
-.is-center .copy {
+.ads-hero-section__inner.is-center .ads-hero-section__copy {
   justify-items: center;
 }
 
-.title {
+.ads-hero-section__title {
+  font-family: var(--font-display);
   font-size: clamp(2.6rem, 7vw, 4.6rem);
   line-height: 1.02;
   letter-spacing: -0.035em;
   font-weight: 600;
 }
 
-.lede {
+.ads-hero-section__lead {
   max-width: 640px;
 }
 
-.actions {
+.ads-hero-section__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 8px;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
 }
 
-.is-center .actions {
+.ads-hero-section__inner.is-center .ads-hero-section__actions {
   justify-content: center;
 }
 
-.visual {
+.ads-hero-section__visual {
   width: 100%;
   max-width: 980px;
 }

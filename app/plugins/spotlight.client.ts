@@ -14,7 +14,7 @@ export default defineNuxtPlugin(() => {
     raf = 0
     const e = last
     if (!e) return
-    const el = (e.target as Element | null)?.closest?.<HTMLElement>('.card, .tile') ?? null
+    const el = (e.target as Element | null)?.closest?.<HTMLElement>('.card, .tile, .ads-dash-shell__tile') ?? null
     if (el !== current) {
       current?.classList.remove('lit')
       current = el

@@ -1,18 +1,21 @@
 <script setup lang="ts">
-// A keyboard key.
-defineProps<{ keys?: string[] }>()
+// A keyboard shortcut: one key, or a chord. Keys sit in the data face, pressed
+// into the page like every other piece of reference text. Nested <kbd>s are
+// how HTML spells "press these together".
+defineProps<{ keys: string[] }>()
 </script>
 
 <template>
-  <span class="kbd-group">
-    <kbd v-for="(k, i) in keys ?? ['K']" :key="i" class="kbd">{{ k }}</kbd>
-  </span>
+  <kbd class="ads-kbd">
+    <kbd v-for="(k, i) in keys" :key="i" class="kbd">{{ k }}</kbd>
+  </kbd>
 </template>
 
 <style scoped>
-.kbd-group {
+.ads-kbd {
   display: inline-flex;
-  gap: 4px;
   align-items: center;
+  gap: var(--sp-1);
+  font-family: var(--mono);
 }
 </style>

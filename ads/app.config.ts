@@ -8,10 +8,12 @@ export default defineAppConfig({
     tagline: 'A dashboard and data-UI studio.',
     promise: 'We design the dashboard your users live in.',
   },
+  // `rail` also lists a page in the foot of the desktop rail.
   pages: [
     { to: '/', label: 'Home', short: 'Home', icon: 'dashboard' },
-    { to: '/dashboard-example', label: 'Dashboard example', short: 'Example', icon: 'chart' },
-    { to: '/design-system', label: 'Design system', short: 'System', icon: 'system' },
+    { to: '/dashboard-example', label: 'Dashboard example', short: 'Example', icon: 'chart', rail: true },
+    { to: '/design-system', label: 'Design system', short: 'System', icon: 'system', rail: true },
+    { to: '/ui-kit', label: 'UI Kit', short: 'UI Kit', icon: 'layers', rail: true },
     { to: '/contact', label: 'Start a project', short: 'Contact', icon: 'mail' },
   ],
   nav: [

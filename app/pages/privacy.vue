@@ -1,6 +1,5 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'plain' })
-const { studio } = useAppConfig()
 useSeo({
   title: 'Privacy',
   path: '/privacy',
@@ -24,7 +23,7 @@ useSeo({
         </p>
         <p class="body">
           The enquiry form composes a message in your own mail client; it does
-          not post anywhere. If you write to {{ studio.email }} we keep that
+          not post anywhere. If you write to us we keep that
           correspondence for as long as we are talking, and delete it when we
           are not. Ask and we will confirm what we hold.
         </p>

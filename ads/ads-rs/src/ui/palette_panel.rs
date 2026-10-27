@@ -2,33 +2,61 @@
 
 use dioxus::prelude::*;
 
-/// One pigment.
+/// The five tokens a pigment can be. The set is closed: a pigment is one of
+/// these or it is not a pigment.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum PigmentToken {
+    BrandPrimary,
+    BrandSecondary,
+    Ok,
+    Warn,
+    Bad,
+}
+
+impl PigmentToken {
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::BrandPrimary => "--brand-primary",
+            Self::BrandSecondary => "--brand-secondary",
+            Self::Ok => "--ok",
+            Self::Warn => "--warn",
+            Self::Bad => "--bad",
+        }
+    }
+}
+
+/// One pigment: its name, its role, and the token it paints.
 #[derive(Clone, PartialEq)]
 pub struct Pigment {
     pub name: String,
     pub role: String,
-    pub dark: String,
-    pub light: String,
+    pub token: PigmentToken,
 }
 
 impl Pigment {
     #[must_use]
-    pub fn new(name: impl Into<String>, role: impl Into<String>, dark: impl Into<String>, light: impl Into<String>) -> Self {
-        Self { name: name.into(), role: role.into(), dark: dark.into(), light: light.into() }
+    pub fn new(name: impl Into<String>, role: impl Into<String>, token: PigmentToken) -> Self {
+        Self { name: name.into(), role: role.into(), token }
     }
 }
 
 fn defaults() -> Vec<Pigment> {
     vec![
-        Pigment::new("Tyrian", "Primary", "#b66dcc", "#8a4e9c"),
-        Pigment::new("Verdigris", "Secondary", "#2b96a4", "#006981"),
-        Pigment::new("Celadon", "Success", "#7bc062", "#317905"),
-        Pigment::new("Orpiment", "Warning", "#d88c00", "#9d5500"),
-        Pigment::new("Vermilion", "Danger", "#e55458", "#9e001f"),
+        Pigment::new("Tyrian", "Primary", PigmentToken::BrandPrimary),
+        Pigment::new("Verdigris", "Secondary", PigmentToken::BrandSecondary),
+        Pigment::new("Celadon", "Success", PigmentToken::Ok),
+        Pigment::new("Orpiment", "Warning", PigmentToken::Warn),
+        Pigment::new("Vermilion", "Danger", PigmentToken::Bad),
     ]
 }
 
-/// The brand and semantic colours — the only hue in the whole system.
+/// The five pigments — the brand and semantic colours — at the values each
+/// theme actually uses. The only hue in the whole system.
+///
+/// Each chip paints its token rather than a copied hex, so the panel can never
+/// disagree with the sheet it documents, and it re-steps with the theme for
+/// free.
 #[component]
 pub fn PalettePanel(
     #[props(into, optional)] pigments: Option<Vec<Pigment>>,
@@ -37,18 +65,18 @@ pub fn PalettePanel(
 ) -> Element {
     let pigments = pigments.unwrap_or_else(defaults);
     rsx! {
-        div { class: "well palette",
-            dl { class: "palette-stats",
-                div { dt { class: "num", "{entries}" } dd { "entries" } }
-                div { dt { class: "num", "{groups}" } dd { "groups" } }
-                div { dt { class: "num", "{pigments.len()}" } dd { "pigments" } }
+        div { class: "well ads-palette-panel",
+            dl { class: "ads-palette-panel__stats",
+                div { dt { "Entries" } dd { class: "num", "{entries}" } }
+                div { dt { "Groups" } dd { class: "num", "{groups}" } }
+                div { dt { "Pigments" } dd { class: "num", "{pigments.len()}" } }
             }
-            ul { class: "palette-swatches",
+            ul { class: "ads-palette-panel__swatches",
                 for p in &pigments {
-                    li { class: "sw", style: "--d:{p.dark};--l:{p.light}",
-                        span { class: "sw-chip" }
-                        span { class: "sw-name", "{p.name}" }
-                        span { class: "sw-role", "{p.role}" }
+                    li { key: "{p.name}", class: "ads-palette-panel__swatch",
+                        span { class: "ads-palette-panel__chip", style: "background:var({p.token.as_str()})" }
+                        span { class: "ads-palette-panel__name", "{p.name}" }
+                        span { class: "ads-palette-panel__role", "{p.role}" }
                     }
                 }
             }

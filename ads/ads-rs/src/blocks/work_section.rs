@@ -29,26 +29,35 @@ impl WorkCard {
     }
 }
 
-/// A grid of project cards: kind, name, description, and tags.
+/// The work as a grid of project cards: kind, name, description, and tags.
+/// The tags are labels, not filters, so they read as plain chips. The live
+/// link opens a new tab, and its name says so.
 #[component]
 pub fn WorkSection(
     #[props(into)] items: Vec<WorkCard>,
 ) -> Element {
     rsx! {
-        section { class: "work",
-            div { class: "work-grid",
+        section { class: "ads-work-section",
+            div { class: "ads-work-section__grid",
                 for p in &items {
-                    article { class: "work-card card",
-                        span { class: "card-eyebrow", "{p.kind}" }
-                        div { class: "card-title-row",
-                            h3 { class: "card-name", "{p.name}" }
-                            if let Some(h) = &p.href {
-                                a { class: "card-link", href: "{h}", target: "_blank", rel: "noopener", "Live ↗" }
+                    article { key: "{p.name}", class: "card ads-work-section__card",
+                        span { class: "ads-work-section__kind", "{p.kind}" }
+                        div { class: "ads-work-section__title-row",
+                            h3 { class: "ads-work-section__name", "{p.name}" }
+                            if let Some(h) = p.href.as_deref().filter(|h| !h.is_empty()) {
+                                a {
+                                    class: "ads-work-section__link",
+                                    href: "{h}",
+                                    target: "_blank",
+                                    rel: "noopener",
+                                    "aria-label": "Live site: {p.name} (opens in a new tab)",
+                                    "Live ↗"
+                                }
                             }
                         }
-                        p { class: "card-desc", "{p.description}" }
-                        div { class: "card-tags",
-                            for t in &p.tags { span { class: "chip", "{t}" } }
+                        p { class: "ads-work-section__desc", "{p.description}" }
+                        div { class: "ads-work-section__tags",
+                            for t in &p.tags { span { key: "{t}", class: "chip", "{t}" } }
                         }
                     }
                 }

@@ -1,13 +1,14 @@
 <script setup lang="ts">
-// A removable filter tag. Distinct from a status chip, which describes the
-// data and cannot be removed.
-withDefaults(defineProps<{ label: string; removable?: boolean }>(), { removable: true })
+// A filter the reader applied and can take off again. Always removable: the
+// dismiss affordance is the whole difference from a status chip, which
+// describes the data and cannot be removed — for that, use AdsStatus.
+defineProps<{ label: string }>()
 const emit = defineEmits<{ (e: 'remove'): void }>()
 </script>
 
 <template>
   <span class="ads-tag">
     {{ label }}
-    <button v-if="removable" type="button" aria-label="Remove" @click="emit('remove')">×</button>
+    <button type="button" :aria-label="`Remove filter ${label}`" @click="emit('remove')">×</button>
   </span>
 </template>

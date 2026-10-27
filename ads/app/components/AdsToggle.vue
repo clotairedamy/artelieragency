@@ -1,6 +1,14 @@
 <script setup lang="ts">
-// A single toggle button — a setting that flips on/off and stays that way.
-withDefaults(defineProps<{ modelValue?: boolean; icon?: string; size?: number }>(), { modelValue: false, size: 16 })
+// A single toggle button — a setting that flips on and stays that way. Off, it
+// stands proud like any button; on, it stays pressed into the page with its
+// text brightened. The shadow inversion is the state, so the accent fill stays
+// free for the one action on the screen. With only a glyph and no words, the
+// `label` names it to assistive tech.
+withDefaults(defineProps<{ modelValue?: boolean; icon?: string; size?: number; label?: string }>(), {
+  modelValue: false,
+  size: 16,
+  label: undefined,
+})
 const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
 </script>
 
@@ -10,6 +18,7 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
     class="ads-toggle"
     :class="{ 'is-on': modelValue }"
     :aria-pressed="modelValue"
+    :aria-label="label"
     @click="emit('update:modelValue', !modelValue)"
   >
     <Icon v-if="icon" :name="icon" :size="size" />
@@ -21,24 +30,26 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
 .ads-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  padding: 10px 16px;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
   border-radius: var(--radius-sm);
   font-size: 0.88rem;
   font-weight: 500;
-  color: var(--subdued);
-  background: var(--surface);
-  box-shadow: var(--soft-inset-sm);
-  transition: color 0.2s var(--ease), background 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  color: var(--text-soft);
+  background: var(--raised);
+  box-shadow: var(--soft-raised-sm);
+  transition:
+    color var(--dur-control) var(--ease),
+    box-shadow var(--dur-control) var(--ease);
 }
 
 .ads-toggle:hover {
-  color: var(--text);
+  color: var(--accent);
 }
 
 .ads-toggle.is-on {
-  color: var(--accent-ink);
-  background: var(--accent);
-  box-shadow: var(--soft-raised-sm);
+  color: var(--accent);
+  background: var(--surface);
+  box-shadow: var(--soft-inset-sm);
 }
 </style>

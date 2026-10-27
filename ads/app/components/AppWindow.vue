@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// A screenshot in a soft window frame. The first traffic dot carries the
-// accent — the "solid dot marks the value" motif, applied to chrome.
+// A screenshot in a soft window frame. The traffic dots are pressed into the
+// frame and all three are grey: the window is chrome, and the accent is kept
+// for the one action on the page, not spent on a picture of one.
 const props = withDefaults(
   defineProps<{ src: string; alt: string; width?: number; height?: number; eager?: boolean }>(),
   { width: 1440, height: 900, eager: false },
@@ -27,10 +28,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <figure ref="el" class="window" :class="{ in: shown }">
-    <div class="chrome" aria-hidden="true"><span /><span /><span /></div>
-    <div class="pane">
+  <figure ref="el" class="ads-app-window" :class="{ 'is-shown': shown }">
+    <div class="ads-app-window__chrome" aria-hidden="true">
+      <span class="ads-app-window__dot" /><span class="ads-app-window__dot" /><span class="ads-app-window__dot" />
+    </div>
+    <div class="ads-app-window__pane">
       <img
+        class="ads-app-window__image"
         :src="src"
         :alt="alt"
         :width="props.width"
@@ -44,22 +48,21 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.window {
+.ads-app-window {
   margin: 0;
-  padding: 12px;
-  padding-top: 0;
+  padding: 0 var(--sp-3) var(--sp-3);
   border-radius: var(--radius);
   background: var(--raised);
   box-shadow: var(--soft-raised-lg);
 }
 
-.chrome {
+.ads-app-window__chrome {
   display: flex;
-  gap: 8px;
-  padding: 14px 6px 12px;
+  gap: var(--sp-2);
+  padding: var(--sp-3) 6px;
 }
 
-.chrome span {
+.ads-app-window__dot {
   width: 11px;
   height: 11px;
   border-radius: 50%;
@@ -67,38 +70,35 @@ onMounted(() => {
   box-shadow: var(--soft-inset-sm);
 }
 
-.chrome span:first-child {
-  background: var(--accent);
-  box-shadow: none;
-}
-
-.pane {
+.ads-app-window__pane {
   position: relative;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   background: var(--canvas);
 }
 
-img {
+.ads-app-window__image {
   display: block;
   width: 100%;
   height: auto;
 }
 
 /* Reveal: rise and settle as it scrolls into view. */
-.js .window {
+.js .ads-app-window {
   opacity: 0;
   translate: 0 40px;
-  transition: opacity 0.9s var(--ease), translate 1.1s var(--ease);
+  transition:
+    opacity var(--dur-enter) var(--ease),
+    translate var(--dur-enter) var(--ease);
 }
 
-.js .window.in {
+.js .ads-app-window.is-shown {
   opacity: 1;
   translate: 0 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .js .window {
+  .js .ads-app-window {
     opacity: 1;
     translate: none;
     transition: none;

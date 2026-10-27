@@ -1,170 +1,179 @@
 <script setup lang="ts">
-// The footer: brand and description, link columns, and a legal bar.
-export type FooterColumn = { title: string; links: { to: string; label: string }[] }
+// The footer, shaped like the studio site's own: one quiet row under a
+// hairline — the mark, the domain in mono, the links, the year in mono. A
+// larger site can pass `columns` for a sitemap above that row. Nothing here
+// is raised or coloured; the footer is the last place to spend attention.
+// Like the site, the row shows the bare mark; pass brandName to spell it out.
+export type FooterLink = { to: string; label: string }
+export type FooterColumn = { title: string; links: FooterLink[] }
 
-const props = withDefaults(
-  defineProps<{ description?: string; columns?: FooterColumn[] }>(),
+withDefaults(
+  defineProps<{
+    links?: FooterLink[]
+    columns?: FooterColumn[]
+    description?: string
+    domain?: string
+    email?: string
+    owner?: string
+    /** Makes the owner a link, e.g. to their own site. */
+    ownerHref?: string
+    brandName?: string
+  }>(),
   {
-    description: 'A dashboard and data-UI studio. The chrome is grey so the data can be coloured.',
-    columns: () => [
-      {
-        title: 'Kit',
-        links: [
-          { to: '/', label: 'Landing' },
-          { to: '/dashboard', label: 'Dashboard' },
-          { to: '/contact', label: 'Contact form' },
-        ],
-      },
-      {
-        title: 'Design system',
-        links: [
-          { to: '/', label: 'Tokens' },
-          { to: '/', label: 'Components' },
-          { to: '/', label: 'Sections' },
-        ],
-      },
-      {
-        title: 'Studio',
-        links: [
-          { to: '/contact', label: 'Start a project' },
-          { to: '/', label: 'Privacy' },
-          { to: '/', label: 'Contact' },
-        ],
-      },
+    links: () => [
+      { to: '/dashboard', label: 'Dashboard' },
+      { to: '/contact', label: 'Contact' },
+      { to: '/privacy', label: 'Privacy' },
     ],
+    columns: () => [],
+    description: '',
+    domain: '',
+    email: '',
+    owner: '',
+    ownerHref: '',
+    brandName: '',
   },
 )
 
 const year = new Date().getFullYear()
-
-function toTop() {
-  const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' })
-}
+// The address as people say it: no scheme, no www, no trailing slash.
+const host = (href: string) => href.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
 </script>
 
 <template>
-  <footer class="footer">
-    <div class="max inner">
-      <div class="grid">
-        <div class="about">
-          <BrandMark />
-          <p class="desc">{{ props.description }}</p>
-        </div>
-
-        <nav v-for="col in columns" :key="col.title" class="col" :aria-label="col.title">
+  <footer class="ads-site-footer">
+    <div class="ads-site-footer__inner max">
+      <div v-if="columns.length" class="ads-site-footer__sitemap">
+        <p v-if="description" class="ads-site-footer__desc">{{ description }}</p>
+        <nav v-for="col in columns" :key="col.title" class="ads-site-footer__col" :aria-label="col.title">
           <span class="eyebrow">{{ col.title }}</span>
-          <NuxtLink v-for="l in col.links" :key="l.to + l.label" :to="l.to">{{ l.label }}</NuxtLink>
+          <NuxtLink v-for="l in col.links" :key="l.to + l.label" :to="l.to" class="ads-site-footer__link">{{ l.label }}</NuxtLink>
         </nav>
       </div>
 
-      <div class="legal">
-        <span>© {{ year }} Artelier</span>
-        <button type="button" class="top" @click="toTop">
-          Back to top
-          <span class="top-round"><Icon name="arrow" :size="15" style="rotate: -90deg" /></span>
-        </button>
+      <div class="ads-site-footer__bar">
+        <div class="ads-site-footer__brand">
+          <BrandMark :size="24" />
+          <Wordmark v-if="brandName" :text="brandName" :size="15" />
+          <span v-if="domain" class="num ads-site-footer__domain">{{ domain }}</span>
+        </div>
+        <nav v-if="links.length || email" class="ads-site-footer__links" aria-label="Footer">
+          <NuxtLink v-for="l in links" :key="l.to + l.label" :to="l.to" class="ads-site-footer__link">{{ l.label }}</NuxtLink>
+          <a v-if="email" :href="`mailto:${email}`" class="ads-site-footer__link">{{ email }}</a>
+        </nav>
+        <!-- © year, the owner, and the owner's own site spelled out, so the
+             credit says where it goes. The gap spaces them, not the markup. -->
+        <span class="ads-site-footer__copy">
+          <span class="num">© {{ year }}</span>
+          <span v-if="owner" class="ads-site-footer__owner">{{ owner }}</span>
+          <template v-if="ownerHref">
+            <span class="ads-site-footer__dot" aria-hidden="true">·</span>
+            <a :href="ownerHref" rel="author" class="num ads-site-footer__link">{{ host(ownerHref) }}</a>
+          </template>
+        </span>
       </div>
     </div>
   </footer>
 </template>
 
 <style scoped>
-.footer {
-  padding: 72px 0 0;
+.ads-site-footer {
+  padding: var(--sp-5) clamp(20px, 4vw, 48px) var(--sp-6);
   border-top: 1px solid var(--line);
 }
 
-.inner {
-  padding: 0 clamp(20px, 4vw, 48px);
-}
-
-.grid {
+.ads-site-footer__inner {
   display: grid;
-  grid-template-columns: 1.6fr repeat(3, 1fr);
-  gap: 48px;
-  padding-bottom: 56px;
+  gap: var(--sp-6);
 }
 
-.about {
+.ads-site-footer__sitemap {
   display: grid;
-  gap: 18px;
-  align-content: start;
-  justify-items: start;
-  max-width: 320px;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: var(--sp-6) var(--sp-5);
+  padding-top: var(--sp-6);
 }
 
-.desc {
-  font-size: 0.94rem;
+.ads-site-footer__desc {
+  max-width: 32ch;
+  font-size: 0.9rem;
   color: var(--subdued);
 }
 
-.col {
+.ads-site-footer__col {
   display: grid;
-  gap: 12px;
+  gap: var(--sp-3);
   align-content: start;
   justify-items: start;
 }
 
-.col .eyebrow {
-  margin-bottom: 8px;
+.ads-site-footer__col .eyebrow {
+  margin-bottom: var(--sp-1);
 }
 
-.col a {
-  padding-bottom: 2px;
-  color: var(--text-soft);
-  font-size: 0.94rem;
-  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
-  transition:
-    color 0.2s,
-    background-size 0.35s var(--ease);
-}
-
-.col a:hover {
-  color: var(--text);
-  background-size: 100% 1px;
-}
-
-.legal {
+.ads-site-footer__bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
   flex-wrap: wrap;
-  padding: 28px 0;
-  border-top: 1px solid var(--line-strong);
-  font-size: 0.86rem;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-5);
+  font-size: 0.84rem;
   color: var(--subdued);
 }
 
-.top {
-  display: inline-flex;
+.ads-site-footer__brand {
+  display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--sp-2);
   color: var(--text-soft);
 }
 
-.top:hover {
+.ads-site-footer__domain {
+  font-size: 0.8rem;
+}
+
+.ads-site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  margin-left: auto;
+}
+
+.ads-site-footer__link {
+  color: var(--subdued);
+  transition: color var(--dur-control) var(--ease);
+}
+
+.ads-site-footer__col .ads-site-footer__link {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.ads-site-footer__link:hover {
   color: var(--text);
 }
 
-.top-round {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--raised);
-  box-shadow: var(--soft-raised-sm);
+.ads-site-footer__copy {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: 0.78rem;
+}
+
+.ads-site-footer__owner {
   color: var(--text-soft);
 }
 
-@media (max-width: 860px) {
-  .grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .about {
-    grid-column: 1 / -1;
+.ads-site-footer__dot {
+  color: var(--subdued);
+}
+
+/* On one row the credit follows the links, so a hairline sets it apart
+   from them; once the row wraps it starts a line of its own and needs none. */
+@media (min-width: 900px) {
+  .ads-site-footer__copy {
+    padding-left: var(--sp-5);
+    border-left: 1px solid var(--line);
   }
 }
 </style>

@@ -267,7 +267,7 @@ const adoption = [
       <div v-reveal>
         <GanttChart />
       </div>
-      <p v-reveal class="stack body">
+      <p v-reveal class="built-in body">
         <span class="eyebrow">Built in</span>
         <span v-for="t in stack" :key="t" class="chip">{{ t }}</span>
       </p>
@@ -299,7 +299,7 @@ const adoption = [
       </div>
     </section>
 
-    <CtaBand />
+    <StudioCta />
   </div>
 </template>
 
@@ -538,7 +538,7 @@ const adoption = [
 
 /* ─── Stack strip ──────────────────────────────────────────────────────── */
 
-.stack {
+.built-in {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -546,7 +546,7 @@ const adoption = [
   margin: 22px 0 0;
 }
 
-.stack .eyebrow {
+.built-in .eyebrow {
   margin-right: 5px;
 }
 

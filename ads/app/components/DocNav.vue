@@ -1,64 +1,92 @@
 <script setup lang="ts">
 // A help-centre sidebar: pages grouped by section. Prop-driven, so it works
-// with Nuxt Content or a plain array.
+// with Nuxt Content or a plain array. The current page is pressed into the
+// rail — the shadow inversion, not a colour — and announced with
+// aria-current.
 export type DocPage = { title: string; path: string }
 export type DocGroup = { section: string; pages: DocPage[] }
 
 defineProps<{ groups: DocGroup[]; home?: { to: string; label: string } }>()
 
 const route = useRoute()
+const uid = useId()
 </script>
 
 <template>
-  <nav class="docs-nav" aria-label="Docs">
-    <NuxtLink v-if="home" :to="home.to" class="home" :class="{ on: route.path === home.to }">
+  <nav class="ads-doc-nav" aria-label="Docs">
+    <NuxtLink
+      v-if="home"
+      :to="home.to"
+      class="ads-doc-nav__link ads-doc-nav__home"
+      :class="{ 'is-active': route.path === home.to }"
+      :aria-current="route.path === home.to ? 'page' : undefined"
+    >
       {{ home.label }}
     </NuxtLink>
-    <div v-for="g in groups" :key="g.section" class="group">
-      <span class="eyebrow">{{ g.section }}</span>
-      <NuxtLink v-for="p in g.pages" :key="p.path" :to="p.path" :class="{ on: route.path === p.path }">
-        {{ p.title }}
-      </NuxtLink>
+    <div v-for="(g, gi) in groups" :key="g.section" class="ads-doc-nav__group">
+      <span :id="`${uid}-${gi}`" class="eyebrow ads-doc-nav__heading">{{ g.section }}</span>
+      <ul class="ads-doc-nav__list" role="list" :aria-labelledby="`${uid}-${gi}`">
+        <li v-for="p in g.pages" :key="p.path">
+          <NuxtLink
+            :to="p.path"
+            class="ads-doc-nav__link"
+            :class="{ 'is-active': route.path === p.path }"
+            :aria-current="route.path === p.path ? 'page' : undefined"
+          >
+            {{ p.title }}
+          </NuxtLink>
+        </li>
+      </ul>
     </div>
   </nav>
 </template>
 
 <style scoped>
-.docs-nav {
+.ads-doc-nav {
   display: grid;
-  gap: 26px;
+  gap: var(--sp-5);
   align-content: start;
 }
 
-.group {
+.ads-doc-nav__group {
+  display: grid;
+}
+
+.ads-doc-nav__heading {
+  font-size: 0.64rem;
+  margin-bottom: var(--sp-2);
+}
+
+.ads-doc-nav__list {
   display: grid;
   gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.group .eyebrow {
-  font-size: 0.64rem;
-  margin-bottom: 8px;
-}
-
-a {
-  padding: 8px 14px;
-  border-radius: 11px;
+.ads-doc-nav__link {
+  display: block;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   color: var(--text-soft);
-  transition: color 0.2s var(--ease), background 0.2s var(--ease), box-shadow 0.3s var(--ease);
+  transition:
+    color var(--dur-control) var(--ease),
+    box-shadow var(--dur-control) var(--ease);
 }
 
-a:hover {
+.ads-doc-nav__link:hover {
   color: var(--text);
 }
 
-a.on {
+.ads-doc-nav__link.is-active {
   color: var(--text);
   background: var(--surface);
   box-shadow: var(--soft-inset-sm);
 }
 
-.home {
+.ads-doc-nav__home {
   font-weight: 500;
   color: var(--text);
 }

@@ -2,14 +2,15 @@
 
 use dioxus::prelude::*;
 
-/// The wordmark. No mark beside it: the word is the logo.
+/// The wordmark, set small: the studio's name in the display face, in the
+/// ink. It stands on its own where the name has to be read; where it sits
+/// beside `BrandMark`, the mark is the logo and this only spells it out.
 #[component]
 pub fn Wordmark(
-    #[props(into, optional)] text: Option<String>,
+    #[props(into, default = "Artelier".to_string())] text: String,
     #[props(default = 18u32)] size: u32,
 ) -> Element {
-    let text = text.unwrap_or_else(|| "Artelier".to_string());
     rsx! {
-        span { class: "wm", style: "font-size:{size}px", "{text}" }
+        span { class: "ads-wordmark", style: "font-size:{size}px", "{text}" }
     }
 }

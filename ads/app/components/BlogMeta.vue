@@ -1,21 +1,19 @@
 <script setup lang="ts">
-// A post's metadata: its tag, the date, and the reading time.
+// A post's metadata: its tag, the date, and the reading time. The date is
+// ISO and the figures are in the data face, like every other number here.
 defineProps<{ tag: string; date: string; readingTime?: number }>()
-
-const fmt = (d: string) =>
-  new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 </script>
 
 <template>
-  <div class="meta">
-    <span class="tag">{{ tag }}</span>
-    <time :datetime="date">{{ fmt(date) }}</time>
-    <span v-if="readingTime">· {{ readingTime }} min read</span>
+  <div class="ads-blog-meta">
+    <span class="ads-blog-meta__tag">{{ tag }}</span>
+    <time class="num" :datetime="date">{{ date }}</time>
+    <span v-if="readingTime">· <span class="num">{{ readingTime }}</span> min read</span>
   </div>
 </template>
 
 <style scoped>
-.meta {
+.ads-blog-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -24,8 +22,8 @@ const fmt = (d: string) =>
   color: var(--subdued);
 }
 
-.tag {
-  padding: 4px 12px;
+.ads-blog-meta__tag {
+  padding: var(--sp-1) var(--sp-3);
   border-radius: var(--pill);
   background: var(--surface);
   box-shadow: var(--soft-inset-sm);

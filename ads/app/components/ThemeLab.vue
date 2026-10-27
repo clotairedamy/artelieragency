@@ -80,64 +80,64 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="lab card">
-    <div class="lab-head">
+  <div class="card ads-theme-lab">
+    <div class="ads-theme-lab__head">
       <div>
         <span class="eyebrow">Live tokens</span>
         <h3 class="h3">Retheme this page.</h3>
       </div>
-      <button class="btn btn-quiet" type="button" @click="reset">Reset</button>
+      <button class="btn btn-quiet" type="button" @click="reset">Reset tokens</button>
     </div>
 
-    <div class="controls">
-      <div class="control">
-        <label class="eyebrow" for="lab-theme">Theme</label>
-        <div id="lab-theme" class="segmented" role="group" aria-label="Theme">
+    <div class="ads-theme-lab__controls">
+      <div class="ads-theme-lab__control">
+        <span id="lab-theme" class="eyebrow ads-theme-lab__label">Theme</span>
+        <div class="ads-segmented ads-theme-lab__segmented" role="group" aria-labelledby="lab-theme">
           <button
             v-for="t in (['light', 'dark'] as const)"
             :key="t"
             type="button"
-            :class="{ on: theme === t }"
+            :class="{ 'is-on': theme === t }"
             :aria-pressed="theme === t"
             @click="setTheme(t, { x: ($event as MouseEvent).clientX, y: ($event as MouseEvent).clientY })"
           >
-            {{ t }}
+            {{ t === 'light' ? 'Light' : 'Dark' }}
           </button>
         </div>
       </div>
 
-      <div class="control">
-        <label class="eyebrow" for="lab-density">Density</label>
-        <div id="lab-density" class="segmented" role="group" aria-label="Density">
+      <div class="ads-theme-lab__control">
+        <span id="lab-density" class="eyebrow ads-theme-lab__label">Density</span>
+        <div class="ads-segmented ads-theme-lab__segmented" role="group" aria-labelledby="lab-density">
           <button
             v-for="d in (['comfortable', 'compact'] as const)"
             :key="d"
             type="button"
-            :class="{ on: density === d }"
+            :class="{ 'is-on': density === d }"
             :aria-pressed="density === d"
             @click="density = d"
           >
-            {{ d }}
+            {{ d === 'comfortable' ? 'Comfortable' : 'Compact' }}
           </button>
         </div>
       </div>
 
-      <div class="control">
-        <label class="eyebrow" for="lab-radius">
-          Corner radius <span class="num readout">{{ radius }}px</span>
+      <div class="ads-theme-lab__control">
+        <label class="eyebrow ads-theme-lab__label" for="lab-radius">
+          Corner radius <span class="num ads-theme-lab__readout">{{ radius }}px</span>
         </label>
-        <input id="lab-radius" v-model.number="radius" type="range" min="4" max="34" step="1">
+        <input id="lab-radius" v-model.number="radius" class="ads-range" type="range" min="4" max="34" step="1">
       </div>
 
-      <div class="control">
-        <label class="eyebrow" for="lab-depth">
-          Shadow depth <span class="num readout">{{ depth.toFixed(2) }}×</span>
+      <div class="ads-theme-lab__control">
+        <label class="eyebrow ads-theme-lab__label" for="lab-depth">
+          Shadow depth <span class="num ads-theme-lab__readout">{{ depth.toFixed(2) }}×</span>
         </label>
-        <input id="lab-depth" v-model.number="depth" type="range" min="0" max="2" step="0.05">
+        <input id="lab-depth" v-model.number="depth" class="ads-range" type="range" min="0" max="2" step="0.05">
       </div>
     </div>
 
-    <p class="body foot">
+    <p class="body ads-theme-lab__foot">
       Four properties, one stylesheet, every surface on the site. Drag depth to
       zero and watch how much of this design was elevation doing the work.
     </p>
@@ -145,120 +145,59 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.lab {
+.ads-theme-lab {
   display: grid;
-  gap: 24px;
+  gap: var(--sp-5);
 }
 
-.lab-head {
+.ads-theme-lab__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--sp-4);
 }
 
-.lab-head .eyebrow {
+.ads-theme-lab__head .eyebrow {
   margin-bottom: 7px;
 }
 
-.controls {
+.ads-theme-lab__controls {
   display: grid;
   gap: 20px;
 }
 
 @media (min-width: 620px) {
-  .controls {
+  .ads-theme-lab__controls {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-.control {
+.ads-theme-lab__control {
   display: grid;
   gap: 11px;
 }
 
-.control label {
+.ads-theme-lab__label {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
 }
 
-.readout {
+.ads-theme-lab__readout {
   color: var(--text);
   font-size: 0.74rem;
   letter-spacing: 0;
   text-transform: none;
 }
 
-/* ─── Segmented control ────────────────────────────────────────────────── */
-
-.segmented {
+/* The shared segmented control, stretched to the column so the two rows of
+   controls line up. */
+.ads-theme-lab__segmented {
   display: grid;
-  grid-auto-flow: column;
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  box-shadow: var(--soft-inset-sm);
 }
 
-.segmented button {
-  padding: 8px 12px;
-  border-radius: calc(var(--radius-sm) - 4px);
-  font-size: 0.83rem;
-  color: var(--subdued);
-  transition:
-    color 0.25s var(--ease),
-    background 0.25s var(--ease),
-    box-shadow 0.25s var(--ease);
-}
-
-.segmented button:hover {
-  color: var(--text);
-}
-
-.segmented button.on {
-  color: var(--accent-ink);
-  background: var(--accent);
-  box-shadow: var(--soft-raised-sm);
-}
-
-/* ─── Range ────────────────────────────────────────────────────────────── */
-
-input[type='range'] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 10px;
-  border-radius: var(--pill);
-  background: var(--surface);
-  box-shadow: var(--soft-inset-sm);
-  cursor: ew-resize;
-}
-
-input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: var(--soft-raised-sm);
-  cursor: grab;
-}
-
-input[type='range']::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: var(--soft-raised-sm);
-  cursor: grab;
-}
-
-.foot {
+.ads-theme-lab__foot {
   margin: 0;
   max-width: 54ch;
 }

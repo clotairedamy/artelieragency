@@ -139,14 +139,20 @@ fn render_layer(layer: &Layer) -> Element {
 }
 
 /// Inline SVG glyph. `name` is one of the ADS glyph names (see `glyph()`).
+/// `class` and `style` are for the component placing it, as a Vue parent's
+/// class and style fall through onto `<Icon>`.
 #[component]
 pub fn Icon(
     #[props(into)] name: String,
     #[props(default = 20u32)] size: u32,
+    #[props(into, optional)] class: Option<String>,
+    #[props(into, optional)] style: Option<String>,
 ) -> Element {
     let layers = glyph(name.as_str()).unwrap_or(GRID);
     rsx! {
         svg {
+            class: class,
+            style: style,
             width: "{size}",
             height: "{size}",
             view_box: "0 0 24 24",

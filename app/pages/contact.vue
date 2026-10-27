@@ -98,10 +98,6 @@ const mailto = computed(() => {
             <li><span class="num s">02</span> If it looks like a fit, a scope and a fixed price.</li>
             <li><span class="num s">03</span> If it does not, we say so and point you somewhere better.</li>
           </ol>
-          <a class="btn" :href="`mailto:${studio.email}`">
-            <Icon name="mail" :size="18" />
-            {{ studio.email }}
-          </a>
         </aside>
       </div>
     </section>

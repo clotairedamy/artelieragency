@@ -3,7 +3,8 @@
        action, and drops the index rather than pointing at anchors that do
        not exist here. -->
   <DashShell :sections="[]">
+    <template #tools><UiKitLaunch /></template>
     <slot />
-    <SiteFooter />
+    <StudioFooter />
   </DashShell>
 </template>

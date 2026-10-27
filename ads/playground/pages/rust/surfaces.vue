@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Rust surfaces — Card and Well are CSS classes shared with Vue (the same
-// five stylesheets). FrameTab is not ported to Rust yet.
+// five stylesheets); FrameTab is a component.
+const { usage, source } = useRustDocs()
 const cardCode = `div { class: "card", style: "padding:24px",
     span { class: "ads-label", "Crawl health" }
     span { class: "num", "98" }
@@ -13,7 +14,7 @@ const wellCode = `div { class: "well", style: "padding:16px 20px", "A well holds
     <header class="stack gap-2">
       <p class="eyebrow">Artelier Rust · Surfaces</p>
       <h1 class="title face-display">Surfaces</h1>
-      <p class="lede">Cards stand proud of the page; wells are pressed into it. These are CSS classes, shared with Vue.</p>
+      <p class="lede">Cards stand proud of the page; wells are pressed into it. Both are CSS classes, shared with Vue.</p>
     </header>
 
     <RustDoc id="r-card" name="Card" description="A block of content standing proud of the page." :code="cardCode" file="assets/css/base.css" :source="'(CSS class — .card, defined in base.css)'">
@@ -25,13 +26,9 @@ const wellCode = `div { class: "well", style: "padding:16px 20px", "A well holds
       <input class="ads-field" value="Every input is a well" readonly style="max-width: 240px" />
     </RustDoc>
 
-    <div class="card pad-4">
-      <p class="ink-subdued size-sm">
-        <strong class="ink">FrameTab</strong> is documented in the Vue Surfaces
-        page but not ported to Dioxus yet — it is the one surface component
-        still Vue-only.
-      </p>
-    </div>
+    <RustDoc id="r-frametab" name="FrameTab" description="The selected rail item, cut from the frame's own surface and reaching into the rail with concave fillets." :code="usage.FrameTab" file="ui/frame_tab.rs" :source="source('ui/frame_tab.rs')">
+      <div class="block"><FrameTab :items="['Projects', 'Results', 'Issues']" :active="1">The frame</FrameTab></div>
+    </RustDoc>
   </div>
 </template>
 

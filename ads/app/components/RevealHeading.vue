@@ -8,13 +8,13 @@ withDefaults(
 </script>
 
 <template>
-  <component :is="tag" class="rv" :class="`rv--${size}`">
-    <span v-for="(line, i) in lines" :key="i" class="rv-line">{{ line }}</span>
+  <component :is="tag" class="ads-reveal-heading" :class="`is-${size}`">
+    <span v-for="(line, i) in lines" :key="i" class="ads-reveal-heading__line">{{ line }}</span>
   </component>
 </template>
 
 <style scoped>
-.rv {
+.ads-reveal-heading {
   font-family: var(--font-display);
   font-weight: 600;
   color: var(--text);
@@ -22,23 +22,23 @@ withDefaults(
   margin: 0;
 }
 
-.rv-line {
+.ads-reveal-heading__line {
   display: block;
 }
 
-.rv--display {
+.ads-reveal-heading.is-display {
   font-size: clamp(2.6rem, 5.4vw, 4.4rem);
   line-height: 1.04;
   letter-spacing: -0.02em;
 }
 
-.rv--title {
+.ads-reveal-heading.is-title {
   font-size: clamp(1.9rem, 3.4vw, 2.75rem);
   line-height: 1.08;
   letter-spacing: -0.012em;
 }
 
-.rv--statement {
+.ads-reveal-heading.is-statement {
   font-size: clamp(1.6rem, 2.8vw, 2.25rem);
   line-height: 1.18;
   letter-spacing: -0.01em;

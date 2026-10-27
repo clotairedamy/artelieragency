@@ -2,7 +2,8 @@
 
 use dioxus::prelude::*;
 
-/// The simplest disclosure, on native details/summary.
+/// Progressive disclosure on `<details>`, so it works before any script
+/// arrives and is announced correctly without a single ARIA attribute.
 #[component]
 pub fn AdsAccordion(
     #[props(into)] items: Vec<(String, String)>,
@@ -19,7 +20,11 @@ pub fn AdsAccordion(
     }
 }
 
-/// Where you are in a sequence with a known end. Counts discrete stages.
+/// Where you are in a sequence with a known end. Distinct from a progress bar:
+/// this counts discrete stages, not percentage.
+///
+/// The state is never the pip's fill alone: a done step swaps its number for a
+/// tick, the current one is marked `aria-current="step"`, and both are spoken.
 #[component]
 pub fn AdsSteps(
     #[props(into)] steps: Vec<Step>,
@@ -27,17 +32,28 @@ pub fn AdsSteps(
     rsx! {
         ol { class: "ads-steps",
             for (i, s) in steps.iter().enumerate() {
-                li { class: s.state.class(),
-                    span { class: "pip", if s.state == StepState::Done { "✓" } else { "{i + 1}" } }
+                li {
+                    key: "{i}",
+                    class: s.state.class(),
+                    "aria-current": if s.state == StepState::Now { Some("step") } else { None },
+                    span { class: "pip num", "aria-hidden": "true",
+                        if s.state == StepState::Done { "✓" } else { "{i + 1}" }
+                    }
                     "{s.label}"
+                    match s.state {
+                        StepState::Done => rsx! { span { class: "sr-only", "(done)" } },
+                        StepState::Now => rsx! { span { class: "sr-only", "(current)" } },
+                        StepState::Todo => rsx! {},
+                    }
                 }
             }
         }
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub enum StepState {
+    #[default]
     Todo,
     Now,
     Done,
@@ -99,7 +115,9 @@ fn render_nodes(nodes: &[TreeNode]) -> Element {
                 li {
                     span {
                         "{n.label}"
-                        if let Some(c) = n.count { span { class: "count", "{c}" } }
+                        if let Some(c) = n.count {
+                            span { class: "count num", {crate::ui::count_up::format_en_gb(f64::from(c), 0)} }
+                        }
                     }
                     if !n.children.is_empty() {
                         {render_nodes(&n.children)}
@@ -110,7 +128,10 @@ fn render_nodes(nodes: &[TreeNode]) -> Element {
     }
 }
 
-/// Real nesting — site structure, a category hierarchy, a file system.
+/// A tree is the right shape for anything with real nesting — site structure, a
+/// category hierarchy, a file system. Built on nested lists so the nesting is
+/// in the markup, not only in the indentation. Counts are figures, so they are
+/// set in tabular mono and right-aligned on the row.
 #[component]
 pub fn AdsTree(
     #[props(into)] nodes: Vec<TreeNode>,

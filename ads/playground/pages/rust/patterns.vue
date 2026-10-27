@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { usage, source } = useRustDocs()
-const kpi = [{ value: '1,284', label: 'URLs', note: '+37' }, { value: '98', label: 'Health', note: 'of 100' }]
-const gridColumns = [{ key: 'name', label: 'Page' }, { key: 'views', label: 'Views', align: 'end', mono: true }]
+const kpi = [{ value: '1,284', label: 'URLs', delta: '+37', direction: 'up' as const }, { value: '98', label: 'Health', target: 100 }]
+const gridColumns = [{ key: 'name', label: 'Page', mono: true }, { key: 'views', label: 'Views' }]
 const gridRows = [{ name: '/overview', views: 18240 }, { name: '/pricing', views: 9312 }]
 </script>
 
@@ -15,7 +15,7 @@ const gridRows = [{ name: '/overview', views: 18240 }, { name: '/pricing', views
 
     <RustDoc id="r-kpi" name="KpiRow" :code="usage.KpiRow" file="blocks/kpi_row.rs" :source="source('blocks/kpi_row.rs')"><div class="block"><KpiRow :stats="kpi" /></div></RustDoc>
     <RustDoc id="r-filter" name="FilterBar" :code="usage.FilterBar" file="blocks/filter_bar.rs" :source="source('blocks/filter_bar.rs')"><div class="block"><FilterBar :tags="['Exec summary']" /></div></RustDoc>
-    <RustDoc id="r-table" name="TableScreen" :code="usage.TableScreen" file="blocks/table_screen.rs" :source="source('blocks/table_screen.rs')"><div class="block"><TableScreen title="Results" count="733 rows" :columns="gridColumns" :rows="gridRows" /></div></RustDoc>
+    <RustDoc id="r-table" name="TableScreen" :code="usage.TableScreen" file="blocks/table_screen.rs" :source="source('blocks/table_screen.rs')"><div class="block"><TableScreen title="Results" count="733 rows" :tabs="['Internal', 'External']" tab="Internal" :columns="gridColumns" :rows="gridRows" /></div></RustDoc>
     <RustDoc id="r-summary" name="SummaryDetail" :code="usage.SummaryDetail" file="blocks/summary_detail.rs" :source="source('blocks/summary_detail.rs')"><div class="block"><SummaryDetail /></div></RustDoc>
   </div>
 </template>

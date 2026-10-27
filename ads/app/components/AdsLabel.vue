@@ -1,16 +1,11 @@
 <script setup lang="ts">
-// A form label, above its field.
+// A form label, above its field — in the label face, like every label in the
+// system. It is the global `.ads-label`, so it cannot drift from the field
+// labels the rules page shows. A field always has one: placeholder text is
+// gone exactly when it is needed.
 defineProps<{ for?: string }>()
 </script>
 
 <template>
-  <label class="label" :for="for"><slot /></label>
+  <label class="ads-label" :for="$props.for"><slot /></label>
 </template>
-
-<style scoped>
-.label {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text);
-}
-</style>

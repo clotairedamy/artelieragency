@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // A content section: eyebrow, headline and lede, then any body. The workhorse
-// of a marketing page — a titled block of prose or a titled grid.
+// of a marketing page — a titled block of prose or a titled grid. The head is
+// the studio's section head: label, display headline, one lede, and the body
+// below in cards rather than strips.
 withDefaults(
   defineProps<{ eyebrow?: string; title: string; lead?: string; align?: 'center' | 'left' }>(),
   { eyebrow: '', lead: '', align: 'left' },
@@ -8,49 +10,42 @@ withDefaults(
 </script>
 
 <template>
-  <section class="section">
-    <div class="max inner">
-      <header class="head" :class="{ 'is-center': align === 'center' }">
+  <section class="ads-content-section">
+    <div class="ads-content-section__inner max">
+      <header class="ads-content-section__head" :class="{ 'is-center': align === 'center' }">
         <p v-if="eyebrow" class="eyebrow">{{ eyebrow }}</p>
-        <h2 class="title">{{ title }}</h2>
+        <h2 class="ads-content-section__title h2">{{ title }}</h2>
         <p v-if="lead" class="lede">{{ lead }}</p>
       </header>
-      <div class="body"><slot /></div>
+      <div class="ads-content-section__body"><slot /></div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.section {
-  padding: 72px 0;
+.ads-content-section {
+  padding: var(--sp-8) 0;
 }
 
-.inner {
+.ads-content-section__inner {
+  display: grid;
+  gap: var(--sp-7);
   padding: 0 clamp(20px, 4vw, 48px);
-  display: grid;
-  gap: 40px;
 }
 
-.head {
+.ads-content-section__head {
   display: grid;
-  gap: 16px;
+  gap: var(--sp-4);
   max-width: 680px;
 }
 
-.head.is-center {
+.ads-content-section__head.is-center {
   justify-items: center;
-  text-align: center;
   justify-self: center;
+  text-align: center;
 }
 
-.title {
-  font-size: clamp(1.9rem, 4vw, 2.7rem);
-  letter-spacing: -0.028em;
-  font-weight: 540;
-}
-
-.lede {
-  color: var(--text-soft);
-  font-size: 1.05rem;
+.ads-content-section__title {
+  font-family: var(--font-display);
 }
 </style>

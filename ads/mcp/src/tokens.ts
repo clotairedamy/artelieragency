@@ -1,7 +1,10 @@
-// The ADS design tokens, grouped and described for an LLM. Values are the
-// dark theme (the canonical one); the light theme overrides live in
-// app/assets/css/tokens.css under `:root:not([data-theme='dark'])` and can be
-// listed with `list_design_tokens`.
+// The design tokens. Values are read from tokens.css on every call (`:root`
+// holds the dark values, `:root:not([data-theme='dark'])` the light
+// overrides), so they are never stale. This file only adds what CSS cannot
+// say: which group a token belongs to and what it is for. The values written
+// below are kept as documentation of intent; the server reports the CSS.
+import { join } from 'node:path'
+import { VUE_CSS_DIR, readText, rel } from './paths.js'
 
 export type Token = {
   name: string
@@ -188,7 +191,70 @@ export const tokenGroups: TokenGroup[] = [
   },
 ]
 
+type CssToken = { name: string; dark: string; light: string; comment?: string }
+
+function block(css: string, selector: RegExp): string {
+  const m = selector.exec(css)
+  if (!m) return ''
+  let depth = 0
+  for (let k = m.index + m[0].length - 1; k < css.length; k++) {
+    if (css[k] === '{') depth++
+    else if (css[k] === '}' && --depth === 0) return css.slice(m.index + m[0].length, k)
+  }
+  return ''
+}
+
+function declarations(body: string): Map<string, { value: string; comment?: string }> {
+  const out = new Map<string, { value: string; comment?: string }>()
+  // Section comments sit on their own lines; trailing ones describe the token.
+  body = body.replace(/(^|\n)[ \t]*\/\*[\s\S]*?\*\//g, '\n')
+  for (const m of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);[ \t]*(?:\/\*\s*([\s\S]*?)\s*\*\/)?/g)) {
+    out.set(m[1]!, { value: m[2]!.replace(/\s+/g, ' ').trim(), comment: m[3]?.replace(/\s+/g, ' ') || undefined })
+  }
+  return out
+}
+
+/** Every custom property in tokens.css, with its dark and light value. */
+export function readCssTokens(): { file: string; tokens: CssToken[] } {
+  const file = join(VUE_CSS_DIR, 'tokens.css')
+  const css = readText(file) ?? ''
+  const dark = declarations(block(css, /:root\s*\{/))
+  const light = declarations(block(css, /:root:not\(\[data-theme=['"]?dark['"]?\]\)\s*\{/))
+  const tokens: CssToken[] = []
+  for (const [name, d] of dark) tokens.push({ name, dark: d.value, light: light.get(name)?.value ?? d.value, comment: d.comment })
+  for (const [name, l] of light) if (!dark.has(name)) tokens.push({ name, dark: l.value, light: l.value, comment: l.comment })
+  return { file: rel(file), tokens }
+}
+
 export function listTokens(group?: string) {
-  if (!group) return tokenGroups
-  return tokenGroups.filter((g) => g.group === group)
+  const { file, tokens } = readCssTokens()
+  const byName = new Map(tokens.map((t) => [t.name, t]))
+  const placed = new Set<string>()
+  const groups = tokenGroups.map((g) => ({
+    group: g.group,
+    description: g.description,
+    tokens: g.tokens.flatMap((t) => {
+      const css = byName.get(t.name)
+      if (!css) return []
+      placed.add(t.name)
+      return [{ name: t.name, light: css.light, dark: css.dark, description: t.description ?? css.comment }]
+    }),
+  }))
+  const rest = tokens.filter((t) => !placed.has(t.name))
+  if (rest.length) {
+    groups.push({
+      group: 'other',
+      description: 'Tokens in tokens.css without a curated group (internal steps, aliases and newer additions).',
+      tokens: rest.map((t) => ({ name: t.name, light: t.light, dark: t.dark, description: t.comment })),
+    })
+  }
+  const stale = tokenGroups.flatMap((g) => g.tokens.map((t) => t.name)).filter((n) => !byName.has(n))
+  const picked = group ? groups.filter((g) => g.group === group) : groups
+  return {
+    source: file,
+    note: 'Light is the default theme; dark applies with data-theme="dark" on <html>. Use the names, never the values.',
+    groups: picked,
+    ...(group && !picked.length ? { error: `No group "${group}". Groups: ${groups.map((g) => g.group).join(', ')}.` } : {}),
+    ...(stale.length ? { removedFromCss: stale } : {}),
+  }
 }

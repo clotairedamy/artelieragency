@@ -3,25 +3,27 @@ const email = ref('')
 const country = ref('')
 const agree = ref(true)
 const notify = ref(false)
-const range = ref(50)
-const num = ref(3)
+const range = ref(16)
+const num = ref(500)
+const filters = ref(['status: 4xx', 'depth ≤ 3', 'indexable'])
 const rangePreset = ref('30d')
 
 const fieldCode = `<AdsField v-model="email" label="Email" type="email" hint="We never share it." />
 <AdsField v-model="msg" label="Message" type="textarea" />
 <AdsField v-model="c" label="Country" type="select" :options="[{ label: 'US', value: 'US' }]" />`
 
-const numberCode = `<AdsNumber v-model="num" :min="0" :max="10" label="Count" />`
+const numberCode = `<AdsNumber v-model="maxUrls" :min="1" :max="999" label="Max URLs" />`
 
 const daterangeCode = `<AdsDaterange v-model="range" from="2026-09-25" to="2026-10-25" :presets="['7d', '30d', '90d', 'Custom']" />`
 
-const choiceCode = `<AdsChoice v-model="agree" kind="checkbox">I agree</AdsChoice>
-<AdsChoice v-model="opt" kind="radio" name="opt" value="a">Option A</AdsChoice>
-<AdsChoice v-model="notify" kind="switch">Email me</AdsChoice>`
+const choiceCode = `<AdsChoice v-model="agree" kind="checkbox" label="Respect robots.txt" />
+<AdsChoice v-model="opt" kind="radio" name="opt" value="a" label="Weekly" />
+<!-- A switch applies immediately: never inside a form with a submit button. -->
+<AdsChoice v-model="live" kind="switch" label="Live updates" />`
 
-const rangeCode = `<AdsRange v-model="range" :min="0" :max="100" label="Volume" />`
+const rangeCode = `<AdsRange v-model="concurrency" :min="1" :max="128" label="Concurrency" />`
 
-const tagCode = `<AdsTag label="status: 4xx" @remove="…" />`
+const tagCode = `<AdsTag v-for="t in filters" :key="t" :label="t" @remove="filters = filters.filter((x) => x !== t)" />`
 </script>
 
 <template>
@@ -38,18 +40,18 @@ const tagCode = `<AdsTag label="status: 4xx" @remove="…" />`
       description="A labelled text input, textarea, select or search. Label above, hint below, error replacing the hint."
       :code="fieldCode"
       :props="[
-        { name: 'label', type: 'string', default: '' },
+        { name: 'label', type: 'string', default: '— (required)', desc: 'Always visible. A placeholder is never the label.' },
         { name: 'modelValue', type: 'string | number', default: '' },
-        { name: 'type', type: 'text | email | password | tel | number | search | date | textarea | select', default: 'text' },
+        { name: 'type', type: 'text | email | password | tel | number | search | date | textarea | select', default: 'text', desc: 'number, date and tel are set in the data face; number is right-aligned.' },
         { name: 'hint', type: 'string', default: '' },
-        { name: 'error', type: 'string', default: '', desc: 'Shows the error state and message.' },
+        { name: 'error', type: 'string', default: '', desc: 'Replaces the hint. Say what to do, not that something is wrong.' },
         { name: 'options', type: '{ label, value }[]', default: '—', desc: 'For select.' },
       ]"
     >
       <div class="stack gap-3 block" style="max-width: 360px">
         <AdsField v-model="email" label="Email" type="email" hint="We never share it." />
         <AdsField v-model="country" label="Country" type="select" :options="[{ label: 'US', value: 'US' }, { label: 'EU', value: 'EU' }]" />
-        <AdsField label="Invalid" error="This field needs a value." />
+        <AdsField label="Depth limit" type="number" :model-value="-3" error="Enter a whole number of 1 or more." />
       </div>
     </ComponentDoc>
 
@@ -61,10 +63,10 @@ const tagCode = `<AdsTag label="status: 4xx" @remove="…" />`
       :props="[
         { name: 'modelValue', type: 'number', default: '0' },
         { name: 'min / max / step', type: 'number', default: '0 / ∞ / 1' },
-        { name: 'label', type: 'string', default: '' },
+        { name: 'label', type: 'string', default: '— (required)', desc: 'Visible; carries the unit, so the field holds only the figure.' },
       ]"
     >
-      <div class="stack gap-2"><AdsNumber v-model="num" :min="0" :max="10" label="Count" /><span class="dim size-sm">value: {{ num }}</span></div>
+      <AdsNumber v-model="num" :min="1" :max="999" label="Max URLs" />
     </ComponentDoc>
 
     <ComponentDoc
@@ -76,6 +78,7 @@ const tagCode = `<AdsTag label="status: 4xx" @remove="…" />`
         { name: 'from / to', type: 'string', default: 'ISO dates' },
         { name: 'presets', type: 'string[]', default: '7d / 30d / 90d / Custom' },
         { name: 'modelValue', type: 'string', default: '—' },
+        { name: 'label', type: 'string', default: 'Date range', desc: 'Accessible name of the group.' },
       ]"
     >
       <AdsDaterange v-model="rangePreset" from="2026-09-25" to="2026-10-25" />
@@ -84,18 +87,18 @@ const tagCode = `<AdsTag label="status: 4xx" @remove="…" />`
     <ComponentDoc
       id="adschoice"
       name="AdsChoice"
-      description="Three shapes for three meanings: many-of (checkbox), one-of (radio), and a setting that takes effect the moment it is flipped (switch)."
+      description="Three shapes for three meanings: many-of (checkbox), one-of (radio), and a setting that takes effect the moment it is flipped (switch). A switch never sits inside a form with a submit button — that is a checkbox."
       :code="choiceCode"
       :props="[
         { name: 'kind', type: 'checkbox | radio | switch', default: 'checkbox' },
-        { name: 'label', type: 'string', default: '—' },
+        { name: 'label', type: 'string', default: '—', desc: 'Visible label; or use the default slot when it needs a link. One of the two is required.' },
         { name: 'modelValue', type: 'boolean', default: 'false' },
         { name: 'name / value', type: 'string', default: '—', desc: 'For radio groups.' },
       ]"
     >
       <div class="stack gap-3">
-        <AdsChoice v-model="agree" kind="checkbox">I agree to the terms</AdsChoice>
-        <AdsChoice v-model="notify" kind="switch">Email me updates</AdsChoice>
+        <AdsChoice v-model="agree" kind="checkbox" label="Respect robots.txt" />
+        <AdsChoice v-model="notify" kind="switch" label="Live updates" />
       </div>
     </ComponentDoc>
 
@@ -107,10 +110,10 @@ const tagCode = `<AdsTag label="status: 4xx" @remove="…" />`
       :props="[
         { name: 'modelValue', type: 'number', default: '0' },
         { name: 'min / max / step', type: 'number', default: '0 / 100 / 1' },
-        { name: 'label', type: 'string', default: '' },
+        { name: 'label', type: 'string', default: '— (required)', desc: 'Visible, with the value always read out beside it.' },
       ]"
     >
-      <div class="block" style="max-width: 320px"><AdsRange v-model="range" label="Concurrency" /> <span class="num size-sm">{{ range }}</span></div>
+      <div class="block" style="max-width: 320px"><AdsRange v-model="range" :min="1" :max="128" label="Concurrency" /></div>
     </ComponentDoc>
 
     <ComponentDoc
@@ -120,10 +123,13 @@ const tagCode = `<AdsTag label="status: 4xx" @remove="…" />`
       :code="tagCode"
       :props="[
         { name: 'label', type: 'string', default: '—' },
-        { name: 'removable', type: 'boolean', default: 'true' },
+        { name: '@remove', type: 'event', default: '—', desc: 'Always removable — a chip that cannot be removed is AdsStatus.' },
       ]"
     >
-      <div class="row gap-3"><AdsTag label="status: 4xx" /><AdsTag label="depth ≤ 3" /><AdsTag label="indexable" /></div>
+      <div class="row gap-3 wrap">
+        <AdsTag v-for="t in filters" :key="t" :label="t" @remove="filters = filters.filter((x) => x !== t)" />
+        <AdsButton v-if="filters.length < 3" size="sm" variant="quiet" @click="filters = ['status: 4xx', 'depth ≤ 3', 'indexable']">Reset filters</AdsButton>
+      </div>
     </ComponentDoc>
   </div>
 </template>

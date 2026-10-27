@@ -18,7 +18,7 @@ watch(() => route.fullPath, () => (mobileOpen.value = false))
   <div class="shell">
     <aside class="rail">
       <NuxtLink to="/vue" class="rail-brand" aria-label="Artelier Design System">
-        <BrandMark :size="44" :wordmark="false" class="mark" />
+        <BrandMark :size="44" class="mark" />
         <span class="wordmark">Artelier</span>
       </NuxtLink>
 
@@ -81,7 +81,7 @@ watch(() => route.fullPath, () => (mobileOpen.value = false))
       <div class="m-sheet">
         <header class="m-head">
           <NuxtLink to="/vue" class="m-brand" @click="mobileOpen = false">
-            <BrandMark :size="30" :wordmark="false" />
+            <BrandMark :size="30" />
             <span class="m-title">Artelier</span>
           </NuxtLink>
           <button type="button" class="m-close" aria-label="Close" @click="mobileOpen = false">×</button>

@@ -1,15 +1,17 @@
 <script setup lang="ts">
-// A single message in a thread: avatar, name/time, and a bubble.
+// One message in a thread. The name sits in the meta line, so the avatar is
+// decoration and stays out of the reading order. Your own messages drop the
+// avatar and lean right; the time is a figure, so it is set in the data face.
 withDefaults(defineProps<{ name?: string; mine?: boolean; time?: string }>(), { name: '', mine: false, time: '' })
 </script>
 
 <template>
-  <div class="msg" :class="{ mine }">
-    <AdsAvatar v-if="name && !mine" :name="name" :size="32" />
-    <div class="msg-col">
-      <div v-if="name || time" class="msg-meta">
-        <span v-if="name" class="msg-name">{{ name }}</span>
-        <time v-if="time" class="msg-time num">{{ time }}</time>
+  <div class="ads-message" :class="{ 'is-mine': mine }">
+    <AdsAvatar v-if="name && !mine" :name="name" :size="32" decorative />
+    <div class="ads-message__col">
+      <div v-if="name || time" class="ads-message__meta">
+        <span v-if="name" class="ads-message__name">{{ name }}</span>
+        <time v-if="time" class="ads-message__time num">{{ time }}</time>
       </div>
       <AdsBubble :mine="mine"><slot /></AdsBubble>
     </div>
@@ -17,39 +19,39 @@ withDefaults(defineProps<{ name?: string; mine?: boolean; time?: string }>(), { 
 </template>
 
 <style scoped>
-.msg {
+.ads-message {
   display: flex;
-  gap: 10px;
   align-items: flex-start;
+  gap: var(--sp-2);
 }
 
-.msg.mine {
+.ads-message.is-mine {
   justify-content: flex-end;
 }
 
-.msg-col {
+.ads-message__col {
   display: grid;
-  gap: 4px;
+  gap: var(--sp-1);
   min-width: 0;
   max-width: 80%;
 }
 
-.msg.mine .msg-col {
+.ads-message.is-mine .ads-message__col {
   justify-items: end;
 }
 
-.msg-meta {
+.ads-message__meta {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
-.msg-name {
+.ads-message__name {
   font-size: 0.78rem;
   color: var(--text-soft);
 }
 
-.msg-time {
+.ads-message__time {
   font-size: 0.68rem;
   color: var(--subdued);
 }

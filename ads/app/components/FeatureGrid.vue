@@ -1,59 +1,58 @@
 <script setup lang="ts">
-// A grid of feature cards. Each is a soft surface with a glyph, a title and a
-// line of body.
+// A grid of feature cards. Each is a raised card with a glyph in a well, a
+// title and a line of body — the studio's service cards. Hover presses the
+// card in rather than lifting it.
 export type Feature = { icon: string; title: string; body: string }
 
 withDefaults(defineProps<{ features: Feature[]; columns?: 2 | 3 | 4 }>(), { columns: 3 })
 </script>
 
 <template>
-  <div class="grid" :class="`grid-${columns}`">
-    <article v-for="f in features" :key="f.title" class="card card-press feat">
-      <span class="glyph"><Icon :name="f.icon" :size="20" /></span>
-      <h3 class="title">{{ f.title }}</h3>
-      <p class="body">{{ f.body }}</p>
+  <div class="ads-feature-grid" :style="{ '--ads-feature-grid-cols': columns }">
+    <article v-for="f in features" :key="f.title" class="card card-press ads-feature-grid__item">
+      <span class="ads-feature-grid__glyph"><Icon :name="f.icon" :size="20" /></span>
+      <h3 class="ads-feature-grid__title h3">{{ f.title }}</h3>
+      <p class="ads-feature-grid__body">{{ f.body }}</p>
     </article>
   </div>
 </template>
 
 <style scoped>
-.grid {
+.ads-feature-grid {
   display: grid;
   gap: var(--gutter);
 }
 
 @media (min-width: 760px) {
-  .grid-2 { grid-template-columns: repeat(2, 1fr); }
-  .grid-3 { grid-template-columns: repeat(3, 1fr); }
-  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .ads-feature-grid {
+    grid-template-columns: repeat(var(--ads-feature-grid-cols, 3), 1fr);
+  }
 }
 
-.feat {
+.ads-feature-grid__item {
   display: grid;
-  gap: 12px;
+  gap: var(--sp-3);
   align-content: start;
   justify-items: start;
 }
 
-.glyph {
+.ads-feature-grid__glyph {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  margin-bottom: var(--sp-1);
+  border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: var(--soft-inset-sm);
   color: var(--text-soft);
-  margin-bottom: 4px;
 }
 
-.title {
-  font-size: 1.08rem;
-  font-weight: 540;
+.ads-feature-grid__title {
   color: var(--text);
 }
 
-.body {
+.ads-feature-grid__body {
   font-size: 0.9rem;
   color: var(--subdued);
 }

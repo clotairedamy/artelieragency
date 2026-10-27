@@ -2,14 +2,14 @@
 const tab = ref('internal')
 const page = ref(2)
 
-const tabsCode = `<AdsTabs v-model="tab" :tabs="[
+const tabsCode = `<AdsTabs v-model="tab" label="Links" controls="links-table" :tabs="[
   { label: 'Internal', value: 'internal' },
   { label: 'External', value: 'external' },
 ]" />`
 
-const crumbsCode = `<AdsCrumbs :items="[{ label: 'Projects', to: '/' }, { label: 'Results' }]" />`
+const crumbsCode = `<AdsCrumbs :items="[{ label: 'Projects', to: '/' }, { label: 'outerbridgelaw.com', to: '/p/1' }, { label: 'Response codes' }]" />`
 
-const pagerCode = `<AdsPager :page="2" :pages="5" @change="page = $event" />`
+const pagerCode = `<AdsPager v-model:page="page" :pages="24" />`
 </script>
 
 <template>
@@ -23,37 +23,40 @@ const pagerCode = `<AdsPager :page="2" :pages="5" @change="page = $event" />`
     <ComponentDoc
       id="adstabs"
       name="AdsTabs"
-      description="Views of one dataset. The underline is the accent's only appearance in a nav context."
+      description="Filtered views of one dataset, where the columns stay put — not navigation between screens, which is the rail's job. The underline is the accent's only appearance in a nav context. Arrow keys move between tabs."
       :code="tabsCode"
       :props="[
         { name: 'modelValue', type: 'string | number', default: '—' },
         { name: 'tabs', type: '{ label, value }[]', default: '—' },
+        { name: 'label', type: 'string', default: '— (required)', desc: 'Accessible name of the tab row.' },
+        { name: 'controls', type: 'string', default: '—', desc: 'id of the table the tabs filter (aria-controls).' },
       ]"
     >
-      <div class="block"><AdsTabs v-model="tab" :tabs="[{ label: 'Internal', value: 'internal' }, { label: 'External', value: 'external' }, { label: 'Response codes', value: 'codes' }]" /></div>
+      <div class="block"><AdsTabs v-model="tab" label="Links" :tabs="[{ label: 'Internal', value: 'internal' }, { label: 'External', value: 'external' }, { label: 'Response codes', value: 'codes' }]" /></div>
     </ComponentDoc>
 
     <ComponentDoc
       id="adscrumbs"
       name="AdsCrumbs"
-      description="Where you are. Monospaced, because breadcrumbs are mostly paths."
+      description="Where you are, once a screen is three levels deep or more. The last crumb is the current page."
       :code="crumbsCode"
-      :props="[{ name: 'items', type: '{ label, to? }[]', default: '—' }]"
+      :props="[{ name: 'items', type: '{ label, to? }[]', default: '—', desc: 'The last item is marked aria-current=page.' }]"
     >
-      <AdsCrumbs :items="[{ label: 'Projects', to: '/' }, { label: 'outerbridgelaw.com' }, { label: 'Response codes' }]" />
+      <AdsCrumbs :items="[{ label: 'Projects', to: '/' }, { label: 'outerbridgelaw.com', to: '/navigation' }, { label: 'Response codes' }]" />
     </ComponentDoc>
 
     <ComponentDoc
       id="adspager"
       name="AdsPager"
-      description="Which slice you are looking at. Monospaced, with the current page on the accent."
+      description="Which slice you are looking at. Page numbers are figures, so they are monospaced. Past seven pages it keeps the ends and the current page's neighbours, so every page stays reachable."
       :code="pagerCode"
       :props="[
-        { name: 'page', type: 'number', default: '1' },
+        { name: 'page', type: 'number (v-model:page)', default: '1' },
         { name: 'pages', type: 'number', default: '1' },
+        { name: '@change', type: '(page: number)', default: '—', desc: 'Also emitted as update:page.' },
       ]"
     >
-      <div class="stack gap-2"><AdsPager :page="page" :pages="5" @change="page = $event" /><span class="dim size-sm">page {{ page }}</span></div>
+      <AdsPager v-model:page="page" :pages="24" />
     </ComponentDoc>
   </div>
 </template>

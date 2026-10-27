@@ -1,28 +1,29 @@
 <script setup lang="ts">
 // The work as a list: a mark, what it is in a line, and where it lives.
+// A row without an address is plain text — never a link to nowhere.
 export type WorkItem = { name: string; kind: string; words: string; href?: string }
 
 defineProps<{ items: WorkItem[] }>()
 </script>
 
 <template>
-  <ul class="wl">
-    <li v-for="p in items" :key="p.name" class="wl-row">
-      <a :href="p.href ?? '#'" class="wl-link">
-        <ProjectLogo :word="p.name.slice(0, 1)" :size="48" />
-        <span class="wl-text">
-          <span class="wl-kind">{{ p.kind }}</span>
-          <span class="wl-name">{{ p.name }}</span>
-          <span class="wl-words">{{ p.words }}</span>
+  <ul class="ads-work-list">
+    <li v-for="p in items" :key="p.name" class="ads-work-list__row">
+      <component :is="p.href ? 'a' : 'div'" :href="p.href" class="ads-work-list__link" :class="{ 'is-static': !p.href }">
+        <ProjectLogo :word="p.name.slice(0, 1)" :size="48" aria-hidden="true" />
+        <span class="ads-work-list__text">
+          <span class="ads-work-list__kind">{{ p.kind }}</span>
+          <span class="ads-work-list__name">{{ p.name }}</span>
+          <span class="ads-work-list__words">{{ p.words }}</span>
         </span>
-        <span class="wl-go">Read the case study <Icon name="arrow" :size="15" /></span>
-      </a>
+        <span v-if="p.href" class="ads-work-list__go">Read the case study <Icon name="arrow" :size="15" /></span>
+      </component>
     </li>
   </ul>
 </template>
 
 <style scoped>
-.wl {
+.ads-work-list {
   display: grid;
   gap: 2px;
   list-style: none;
@@ -30,40 +31,40 @@ defineProps<{ items: WorkItem[] }>()
   padding: 0;
 }
 
-.wl-row + .wl-row {
+.ads-work-list__row + .ads-work-list__row {
   border-top: 1px solid var(--line);
 }
 
-.wl-link {
+.ads-work-list__link {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
   align-items: center;
   gap: 14px 18px;
-  padding: 14px 16px;
+  padding: 14px var(--sp-4);
   border-radius: var(--radius);
   color: var(--text);
-  transition: background 0.2s var(--ease);
+  transition: background var(--dur-control) var(--ease);
 }
 
-.wl-link:hover {
+.ads-work-list__link:not(.is-static):hover {
   background: var(--hover);
 }
 
-.wl-text {
+.ads-work-list__text {
   display: grid;
   gap: 3px;
   min-width: 0;
 }
 
-.wl-kind {
-  font-family: var(--mono);
+.ads-work-list__kind {
+  font-family: var(--font-label);
   font-size: 0.64rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--subdued);
 }
 
-.wl-name {
+.ads-work-list__name {
   font-family: var(--font-display);
   font-size: clamp(1.3rem, 2.2vw, 1.6rem);
   font-weight: 540;
@@ -71,14 +72,14 @@ defineProps<{ items: WorkItem[] }>()
   line-height: 1.15;
 }
 
-.wl-words {
+.ads-work-list__words {
   max-width: 52ch;
   font-size: 0.9rem;
   line-height: 1.5;
   color: var(--text-soft);
 }
 
-.wl-go {
+.ads-work-list__go {
   grid-column: 2;
   display: inline-flex;
   align-items: center;
@@ -87,15 +88,15 @@ defineProps<{ items: WorkItem[] }>()
   color: var(--text-soft);
 }
 
-.wl-link:hover .wl-go {
+.ads-work-list__link:hover .ads-work-list__go {
   color: var(--text);
 }
 
 @media (min-width: 760px) {
-  .wl-link {
+  .ads-work-list__link {
     grid-template-columns: 48px minmax(0, 1fr) auto;
   }
-  .wl-go {
+  .ads-work-list__go {
     grid-column: 3;
     justify-self: end;
   }

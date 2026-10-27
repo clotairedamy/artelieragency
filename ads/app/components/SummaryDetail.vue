@@ -17,34 +17,34 @@ withDefaults(
 </script>
 
 <template>
-  <ol class="ladder">
-    <li v-for="(r, i) in rungs" :key="i" class="rung">
-      <span class="num n">{{ i + 1 }}</span>
-      <p class="body"><strong>{{ r.title }}</strong> {{ r.body }}</p>
+  <ol class="ads-summary-detail">
+    <li v-for="(r, i) in rungs" :key="i" class="ads-summary-detail__rung">
+      <span class="num ads-summary-detail__step" aria-hidden="true">{{ i + 1 }}</span>
+      <p class="ads-summary-detail__text"><strong>{{ r.title }}</strong> {{ r.body }}</p>
     </li>
   </ol>
 </template>
 
 <style scoped>
-.ladder {
+.ads-summary-detail {
   display: grid;
-  gap: 12px;
+  gap: var(--sp-3);
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.rung {
+.ads-summary-detail__rung {
   display: flex;
   gap: 14px;
   align-items: flex-start;
-  padding: 16px 18px;
+  padding: var(--sp-4) 18px;
   border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: var(--soft-inset-sm);
 }
 
-.n {
+.ads-summary-detail__step {
   display: grid;
   place-items: center;
   width: 26px;
@@ -57,13 +57,13 @@ withDefaults(
   color: var(--text);
 }
 
-.body {
+.ads-summary-detail__text {
   font-size: 0.9rem;
   color: var(--text-soft);
   margin: 0;
 }
 
-.body strong {
+.ads-summary-detail__text strong {
   color: var(--text);
   font-weight: 600;
 }

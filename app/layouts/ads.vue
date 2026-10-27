@@ -11,7 +11,8 @@ const activeId = computed(() => adsGroupOf(active.value) || sections[0]!.id)
 
 <template>
   <DashShell :sections="sections" :active-id="activeId">
+    <template #tools><UiKitLaunch /></template>
     <slot />
-    <SiteFooter />
+    <StudioFooter />
   </DashShell>
 </template>

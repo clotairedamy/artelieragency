@@ -19,13 +19,18 @@ const faqs = [
 
 const navCode = `<SiteNav
   :links="[{ to: '/', label: 'Overview' }, { to: '/dashboard', label: 'Dashboard' }]"
-  cta-to="/contact" cta-label="Start a project" />`
+  cta-to="/contact" cta-label="Start a project" home-label="Artelier home" />`
 
-const footerCode = `<SiteFooter :columns="[{ title: 'Product', links: [{ to: '/', label: 'Docs' }] }]" />`
+const footerCode = `<SiteFooter
+  domain="artelier.studio" email="hello@artelier.studio" owner="Artelier"
+  :links="[{ to: '/dashboard', label: 'Dashboard' }, { to: '/privacy', label: 'Privacy' }]" />`
 
 const heroCode = `<HeroSection eyebrow="Studio" title="The dashboard your users live in" lead="…" align="center">
-  <template #actions><NuxtLink to="/contact" class="btn btn-accent">Start</NuxtLink></template>
-  <template #visual><AdsBars :data="bars" /></template>
+  <template #actions>
+    <NuxtLink to="/contact" class="btn btn-accent">Start a project</NuxtLink>
+    <NuxtLink to="/work" class="btn">See the work</NuxtLink>
+  </template>
+  <template #visual><AdsBars :data="bars" label="Crawls by weekday" /></template>
 </HeroSection>`
 
 const contentCode = `<ContentSection eyebrow="Why" title="A system, not a style guide" lead="…">
@@ -33,22 +38,27 @@ const contentCode = `<ContentSection eyebrow="Why" title="A system, not a style 
 </ContentSection>`
 
 const imageCode = `<ImageSection eyebrow="Soft UI" title="Depth is the only decoration" body="…" flip>
-  <AdsGauge :value="64" label="Scroll" unit="%" />
+  <AdsGauge :value="64" :threshold="75" label="Scroll" unit="%" />
 </ImageSection>`
 
 const featureCode = `<FeatureGrid :features="[{ icon: 'gauge', title: 'Grey chrome', body: '…' }]" :columns="3" />`
 
 const logoCode = `<LogoMarquee :names="['Northwind', 'Vantage', 'Halo']" />`
 
+const marqueeCode = `<Marquee :items="['Accessibility', 'SEO', 'Performance', 'Content']" />`
+
 const pricingCode = `<PricingSection :plans="[
-  { name: 'Studio', price: '$49', period: '/mo', description: '…', features: ['Dashboard'], cta: 'Start', featured: true },
-]" @select="onSelect" />`
+  { name: 'Studio', price: '$49', period: '/mo', description: '…', features: ['Dashboard'], cta: 'Start a project', featured: true },
+]" featured-label="Recommended" @select="onSelect" />`
 
 const faqCode = `<FaqSection :faqs="[{ title: 'Why grey?', body: '…' }]" />`
 
-const ctaCode = `<CtaBand title="Build the dashboard your users live in" cta-label="Start a project" cta-to="/contact" />`
+const ctaCode = `<CtaBand
+  eyebrow="New project" title="Build the dashboard your users live in" body="…"
+  cta-label="Start a project" cta-to="/contact"
+  secondary-label="Email the studio" secondary-to="mailto:hello@artelier.studio" />`
 
-const contactCode = `<ContactForm />`
+const contactCode = `<ContactForm privacy-to="/privacy" @submit="send" />`
 </script>
 
 <template>
@@ -62,34 +72,42 @@ const contactCode = `<ContactForm />`
     <ComponentDoc
       id="sitenav"
       name="SiteNav"
-      description="Sticky navigation: brand, links, one accent CTA and the theme switch. Collapses to a burger on a phone."
+      description="Sticky navigation: brand, links, the theme switch and a CTA. The CTA is default weight unless ctaAccent is set, so the hero below keeps the one accent. On a phone it collapses to a menu button (aria-expanded) and a sheet that Escape closes, returning focus to the button."
       :code="navCode"
       :props="[
         { name: 'links', type: '{ to, label }[]', default: '3 defaults', desc: 'Navigation links.' },
-        { name: 'ctaTo', type: 'string', default: '/contact', desc: 'Destination of the accent CTA.' },
-        { name: 'ctaLabel', type: 'string', default: 'Start a project', desc: 'Label of the accent CTA.' },
+        { name: 'ctaTo', type: 'string', default: '/contact', desc: 'Destination of the CTA. Empty hides it.' },
+        { name: 'ctaLabel', type: 'string', default: 'Start a project', desc: 'Label of the CTA — a verb and its object.' },
+        { name: 'ctaAccent', type: 'boolean', default: 'false', desc: 'Give the CTA the accent. Only on pages where nothing else spends it.' },
+        { name: 'brandName', type: 'string', default: 'Artelier', desc: 'Wordmark beside the mark; it names the brand link. Empty shows the bare mark.' },
+        { name: 'homeLabel', type: 'string', default: 'Home', desc: 'Accessible name of the brand link when it is the bare mark.' },
       ]"
     >
-      <div class="block"><SiteNav :links="[{ to: '/', label: 'Overview' }, { to: '/dashboard', label: 'Dashboard' }, { to: '/contact', label: 'Contact' }]" cta-to="/contact" cta-label="Start a project" /></div>
+      <div class="block"><SiteNav :links="[{ to: '/', label: 'Overview' }, { to: '/dashboard', label: 'Dashboard' }, { to: '/contact', label: 'Contact' }]" cta-to="/contact" cta-label="Start a project" home-label="Artelier home" /></div>
     </ComponentDoc>
 
     <ComponentDoc
       id="sitefooter"
       name="SiteFooter"
-      description="Brand, link columns and a legal bar with back-to-top."
+      description="One quiet row under a hairline, like the studio site's: mark and domain, links, the year. Pass columns for a sitemap above it."
       :code="footerCode"
       :props="[
-        { name: 'description', type: 'string', default: '…', desc: 'Studio blurb under the brand.' },
-        { name: 'columns', type: '{ title, links[] }[]', default: '3 columns', desc: 'Footer link columns.' },
+        { name: 'links', type: '{ to, label }[]', default: '3 defaults', desc: 'Links in the footer row.' },
+        { name: 'columns', type: '{ title, links[] }[]', default: '[]', desc: 'Optional sitemap columns above the row.' },
+        { name: 'description', type: 'string', default: '', desc: 'Blurb beside the columns. Shown only with columns.' },
+        { name: 'domain', type: 'string', default: '', desc: 'Domain beside the mark, in mono.' },
+        { name: 'email', type: 'string', default: '', desc: 'Adds a mailto link to the row.' },
+        { name: 'owner', type: 'string', default: '', desc: 'Name after the year in the © line.' },
+        { name: 'brandName', type: 'string', default: '', desc: 'Spells the name beside the mark. The site shows the bare mark.' },
       ]"
     >
-      <div class="block"><SiteFooter :columns="[{ title: 'Product', links: [{ to: '/', label: 'Overview' }, { to: '/contact', label: 'Contact' }] }]" /></div>
+      <div class="block"><SiteFooter domain="artelier.studio" email="hello@artelier.studio" owner="Artelier" :links="[{ to: '/', label: 'Overview' }, { to: '/contact', label: 'Contact' }]" /></div>
     </ComponentDoc>
 
     <ComponentDoc
       id="herosection"
       name="HeroSection"
-      description="A big display headline over an optional visual. Actions and visual are slots."
+      description="A big display headline over an optional visual. Actions and visual are slots: one accent link for the action the page exists for, a default one beside it."
       :code="heroCode"
       :props="[
         { name: 'eyebrow', type: 'string', default: '', desc: 'Small label above the title.' },
@@ -98,7 +116,7 @@ const contactCode = `<ContactForm />`
         { name: 'align', type: 'center | left', default: 'center', desc: 'Text alignment.' },
       ]"
     >
-      <div class="block"><HeroSection eyebrow="Studio" title="The dashboard your users live in" lead="Grey chrome, coloured data." align="center"><template #actions><span class="btn btn-accent">Start</span></template></HeroSection></div>
+      <div class="block"><HeroSection eyebrow="Studio" title="The dashboard your users live in" lead="Grey chrome, coloured data." align="center"><template #actions><NuxtLink to="/contact" class="btn btn-accent">Start a project</NuxtLink><NuxtLink to="/" class="btn">See the work</NuxtLink></template></HeroSection></div>
     </ComponentDoc>
 
     <ComponentDoc
@@ -128,7 +146,7 @@ const contactCode = `<ContactForm />`
         { name: 'flip', type: 'boolean', default: 'false', desc: 'Swap copy and visual.' },
       ]"
     >
-      <div class="block"><ImageSection eyebrow="Soft UI" title="Depth is the only decoration" body="A raised surface is available; a pressed-in surface holds something."><AdsGauge :value="64" label="Scroll" unit="%" /></ImageSection></div>
+      <div class="block"><ImageSection eyebrow="Soft UI" title="Depth is the only decoration" body="A raised surface is available; a pressed-in surface holds something."><AdsGauge :value="64" :threshold="75" label="Scroll" unit="%" /></ImageSection></div>
     </ComponentDoc>
 
     <ComponentDoc
@@ -147,7 +165,7 @@ const contactCode = `<ContactForm />`
     <ComponentDoc
       id="logomarquee"
       name="LogoMarquee"
-      description="A quiet row of wordmarks, kept monochrome so they never compete with data."
+      description="A quiet row of wordmarks, kept monochrome so they never compete with data. It wraps rather than scrolls."
       :code="logoCode"
       :props="[{ name: 'names', type: 'string[]', default: '6 defaults', desc: 'Wordmarks to show.' }]"
     >
@@ -155,11 +173,24 @@ const contactCode = `<ContactForm />`
     </ComponentDoc>
 
     <ComponentDoc
+      id="marquee"
+      name="Marquee"
+      description="A scrolling band of pills. Pauses on hover, on focus and from its own toggle; under reduced motion it never moves and the pills wrap."
+      :code="marqueeCode"
+      :props="[{ name: 'items', type: 'string[]', default: '6 defaults', desc: 'Pill labels.' }]"
+    >
+      <div class="block"><Marquee :items="['Accessibility', 'SEO', 'Performance', 'Content', 'Structure']" /></div>
+    </ComponentDoc>
+
+    <ComponentDoc
       id="pricingsection"
       name="PricingSection"
-      description="Pricing cards. The featured plan earns the one accent."
+      description="Pricing cards, figures in mono. The recommended plan is shown by depth and value — further off the page, the brightest figure, the one accent button — never by a border or a hue. Only the first featured plan gets it."
       :code="pricingCode"
-      :props="[{ name: 'plans', type: 'Plan[]', default: '—', desc: '{ name, price, period?, description, features[], cta, featured? }' }]"
+      :props="[
+        { name: 'plans', type: 'Plan[]', default: '—', desc: '{ name, price, period?, description, features[], cta, featured? }' },
+        { name: 'featuredLabel', type: 'string', default: 'Recommended', desc: 'Text of the flag on the featured plan.' },
+      ]"
     >
       <div class="block"><PricingSection :plans="plans" /></div>
     </ComponentDoc>
@@ -177,23 +208,30 @@ const contactCode = `<ContactForm />`
     <ComponentDoc
       id="ctaband"
       name="CtaBand"
-      description="The closing call to action — one raised card, one accent button."
+      description="The closing call to action, shaped like the studio site's: one raised panel, one accent button, a default secondary beside it."
       :code="ctaCode"
       :props="[
-        { name: 'title', type: 'string', default: '…' },
-        { name: 'body', type: 'string', default: '…' },
+        { name: 'eyebrow', type: 'string', default: '' },
+        { name: 'title', type: 'string', default: '—', desc: 'Required.' },
+        { name: 'body', type: 'string', default: '', desc: 'What happens next, in a sentence or two.' },
         { name: 'ctaLabel', type: 'string', default: 'Start a project' },
         { name: 'ctaTo', type: 'string', default: '/contact' },
+        { name: 'secondaryLabel', type: 'string', default: '', desc: 'Default-weight second action. Needs secondaryTo.' },
+        { name: 'secondaryTo', type: 'string', default: '' },
       ]"
     >
-      <div class="block"><CtaBand /></div>
+      <div class="block"><CtaBand eyebrow="New project" title="Build the dashboard your users live in." body="Send the screen you are least happy with. You get a written read on it within two working days." secondary-label="Email the studio" secondary-to="mailto:hello@artelier.studio" /></div>
     </ComponentDoc>
 
     <ComponentDoc
       id="contactform"
       name="ContactForm"
-      description="A full contact form (name, email, phone, message, consent) with a toast on submit."
+      description="A contact form: visible labels on every field, errors under the field that say what to do, focus moved to the first one. A toast confirms a send; it never carries an error."
       :code="contactCode"
+      :props="[
+        { name: 'privacyTo', type: 'string', default: '/privacy', desc: 'Where the consent checkbox links.' },
+        { name: '@submit', type: '(data: ContactMessage) => void', default: '—', desc: 'Fires with the fields once they validate.' },
+      ]"
     >
       <div class="block"><ContactForm /></div>
     </ComponentDoc>

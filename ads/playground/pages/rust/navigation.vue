@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { usage, source } = useRustDocs()
 const tab = ref('internal')
+const page = ref(4)
 const tabOptions = [{ label: 'Internal', value: 'internal' }, { label: 'External', value: 'external' }]
 </script>
 
@@ -12,9 +13,9 @@ const tabOptions = [{ label: 'Internal', value: 'internal' }, { label: 'External
       <p class="lede">Getting between screens.</p>
     </header>
 
-    <RustDoc id="r-tabs" name="AdsTabs" :code="usage.AdsTabs" file="ui/group.rs" :source="source('ui/group.rs')"><AdsTabs v-model="tab" :tabs="tabOptions" /></RustDoc>
-    <RustDoc id="r-crumbs" name="AdsCrumbs" :code="usage.AdsCrumbs" file="ui/nav.rs" :source="source('ui/nav.rs')"><AdsCrumbs :items="[{ label: 'Projects', to: '/' }, { label: 'Results' }]" /></RustDoc>
-    <RustDoc id="r-pager" name="AdsPager" :code="usage.AdsPager" file="ui/nav.rs" :source="source('ui/nav.rs')"><AdsPager :page="2" :pages="5" /></RustDoc>
+    <RustDoc id="r-tabs" name="AdsTabs" :code="usage.AdsTabs" file="ui/group.rs" :source="source('ui/group.rs')"><AdsTabs v-model="tab" :tabs="tabOptions" label="Links" /></RustDoc>
+    <RustDoc id="r-crumbs" name="AdsCrumbs" :code="usage.AdsCrumbs" file="ui/nav.rs" :source="source('ui/nav.rs')"><AdsCrumbs :items="[{ label: 'Projects', to: '/' }, { label: 'CrawlStat', to: '/' }, { label: 'Results' }]" /></RustDoc>
+    <RustDoc id="r-pager" name="AdsPager" :code="usage.AdsPager" file="ui/nav.rs" :source="source('ui/nav.rs')"><AdsPager v-model:page="page" :pages="12" /></RustDoc>
   </div>
 </template>
 

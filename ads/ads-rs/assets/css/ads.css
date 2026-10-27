@@ -52,7 +52,7 @@
   border: 0;
   border-radius: var(--radius-sm);
   box-shadow: var(--soft-inset);
-  transition: box-shadow 0.25s var(--ease);
+  transition: box-shadow var(--dur-control) var(--ease);
 }
 
 .ads-field::placeholder {
@@ -147,9 +147,9 @@ select.ads-field {
   box-shadow: var(--soft-inset-sm);
   color: transparent;
   transition:
-    background 0.2s var(--ease),
-    color 0.2s var(--ease),
-    box-shadow 0.2s var(--ease);
+    background var(--dur-control) var(--ease),
+    color var(--dur-control) var(--ease),
+    box-shadow var(--dur-control) var(--ease);
 }
 
 .ads-box.is-round {
@@ -182,7 +182,7 @@ select.ads-field {
   border-radius: var(--pill);
   background: var(--surface);
   box-shadow: var(--soft-inset-sm);
-  transition: background 0.26s var(--ease);
+  transition: background var(--dur-control) var(--ease);
 }
 
 .ads-switch::after {
@@ -196,8 +196,8 @@ select.ads-field {
   background: var(--subdued);
   box-shadow: var(--soft-raised-sm);
   transition:
-    transform 0.26s var(--ease),
-    background 0.26s var(--ease);
+    transform var(--dur-control) var(--ease),
+    background var(--dur-control) var(--ease);
 }
 
 .ads-choice input:checked + .ads-switch {
@@ -265,12 +265,12 @@ select.ads-field {
   color: var(--subdued);
   white-space: nowrap;
   transition:
-    color 0.25s var(--ease),
-    background 0.25s var(--ease);
+    color var(--dur-control) var(--ease),
+    background var(--dur-control) var(--ease);
 }
 
 .ads-segmented > button:hover {
-  color: var(--text);
+  color: var(--accent);
 }
 
 .ads-segmented > button.is-on {
@@ -334,6 +334,7 @@ select.ads-field {
   align-items: center;
   gap: 4px;
   font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
   font-size: 0.76rem;
   color: var(--subdued);
 }
@@ -365,7 +366,7 @@ select.ads-field {
   height: 100%;
   border-radius: var(--pill);
   background: var(--accent);
-  transition: width 0.7s var(--ease);
+  transition: width var(--dur-enter) var(--ease);
 }
 
 /* The threshold mark. A meter without one is decoration — the reader has no
@@ -391,7 +392,7 @@ select.ads-field {
   padding: 11px 15px;
   font-size: 0.9rem;
   color: var(--subdued);
-  transition: color 0.25s var(--ease);
+  transition: color var(--dur-control) var(--ease);
 }
 
 .ads-tabs > button:hover {
@@ -451,12 +452,12 @@ select.ads-field {
   font-size: 0.78rem;
   color: var(--subdued);
   transition:
-    color 0.2s var(--ease),
-    background 0.2s var(--ease);
+    color var(--dur-control) var(--ease),
+    background var(--dur-control) var(--ease);
 }
 
 .ads-pager button:hover {
-  color: var(--text);
+  color: var(--accent);
   background: var(--hover);
 }
 
@@ -619,7 +620,7 @@ select.ads-field {
   font-size: 0.9rem;
   color: var(--text-soft);
   list-style: none;
-  transition: color 0.2s var(--ease);
+  transition: color var(--dur-control) var(--ease);
 }
 
 .ads-accordion summary::-webkit-details-marker {
@@ -638,7 +639,7 @@ select.ads-field {
   border-right: 1.5px solid currentColor;
   border-bottom: 1.5px solid currentColor;
   transform: rotate(-45deg);
-  transition: transform 0.25s var(--ease);
+  transition: transform var(--dur-control) var(--ease);
 }
 
 .ads-accordion details[open] > summary::before {
@@ -705,7 +706,7 @@ select.ads-field {
   margin-top: 2px;
 }
 
-.ads-tree span {
+.ads-tree li > span {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -716,7 +717,7 @@ select.ads-field {
   cursor: default;
 }
 
-.ads-tree span:hover {
+.ads-tree li > span:hover {
   background: var(--hover);
   color: var(--text);
 }
@@ -847,8 +848,8 @@ select.ads-field {
   font-size: 0.72rem;
   line-height: 1;
   transition:
-    color 0.2s var(--ease),
-    background 0.2s var(--ease);
+    color var(--dur-control) var(--ease),
+    background var(--dur-control) var(--ease);
 }
 
 .ads-tag button:hover {
@@ -877,13 +878,13 @@ select.ads-field {
   color: var(--text-soft);
   text-align: left;
   transition:
-    background 0.18s var(--ease),
-    color 0.18s var(--ease);
+    background var(--dur-control) var(--ease),
+    color var(--dur-control) var(--ease);
 }
 
 .ads-menu button:hover {
   background: var(--hover);
-  color: var(--text);
+  color: var(--accent);
 }
 
 .ads-menu hr {
@@ -907,7 +908,7 @@ select.ads-field {
   text-decoration: underline;
   text-decoration-color: var(--line-strong);
   text-underline-offset: 3px;
-  transition: text-decoration-color 0.2s var(--ease);
+  transition: text-decoration-color var(--dur-control) var(--ease);
 }
 
 .ads-link:hover {
@@ -954,8 +955,8 @@ select.ads-field {
   font-size: 0.6rem;
   line-height: 1;
   transition:
-    color 0.18s var(--ease),
-    background 0.18s var(--ease);
+    color var(--dur-control) var(--ease),
+    background var(--dur-control) var(--ease);
 }
 
 .ads-number .steps button:hover {
@@ -1105,9 +1106,9 @@ select.ads-field {
   box-shadow: var(--soft-raised-sm);
   color: var(--text-soft);
   transition:
-    box-shadow 0.28s var(--ease),
-    color 0.28s var(--ease),
-    transform 0.28s var(--ease);
+    box-shadow var(--dur-control) var(--ease),
+    color var(--dur-control) var(--ease),
+    transform var(--dur-control) var(--ease);
 }
 
 .ads-icon-button:hover {

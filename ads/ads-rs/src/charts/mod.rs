@@ -1,5 +1,5 @@
-//! Hand-drawn charts (bars, sparkline, gauge, heatmap, line) and the chart
-//! chooser.
+//! Hand-drawn charts (bars, sparkline, gauge, heatmap, line), the engagement
+//! Gantt chart, and the chart chooser.
 
 pub mod bar;
 pub mod chart_choice;
@@ -10,7 +10,7 @@ pub mod line;
 pub mod sparkline;
 
 pub use bar::AdsBars;
-pub use chart_choice::ChartChoice;
+pub use chart_choice::{ChartChoice, ChartChoiceRow};
 pub use gantt::{GanttChart, GanttPhase};
 pub use gauge::AdsGauge;
 pub use heatmap::AdsHeatmap;

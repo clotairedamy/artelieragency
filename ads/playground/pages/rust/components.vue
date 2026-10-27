@@ -10,7 +10,7 @@ const groups = [
   { title: 'Feedback', to: '/rust/feedback', items: ['Banner', 'Toast', 'Tooltip', 'Skeleton', 'Empty', 'Modal'] },
   { title: 'Patterns', to: '/rust/patterns', items: ['KpiRow', 'FilterBar', 'TableScreen', 'DashShell', 'CommandPalette'] },
   { title: 'Elements', to: '/rust/elements', items: ['Typography', 'AspectRatio', 'Bubble', 'Item', 'Marker', 'Kbd', 'InputGroup', 'InputOtp', 'Select', 'Combobox', 'Sheet', 'Calendar', 'Trace', 'Questionnaire', 'Message', '…'] },
-  { title: 'Page sections', to: '/rust/sections', items: ['SiteNav', 'HeroSection', 'FeatureGrid', 'PricingSection', 'FaqSection', 'CtaBand', 'ContactForm', 'SiteFooter'] },
+  { title: 'Page sections', to: '/rust/sections', items: ['SiteNav', 'HeroSection', 'ContentSection', 'ImageSection', 'FeatureGrid', 'LogoMarquee', 'PricingSection', 'FaqSection', 'CtaBand', 'ContactForm', 'SiteFooter', 'ScreenTour', 'WorkList', '…'] },
   { title: 'Docs', to: '/rust/docs', items: ['DocShell', 'DocNav', 'Callout', 'AppWindow', 'Screenshot'] },
 ]
 </script>

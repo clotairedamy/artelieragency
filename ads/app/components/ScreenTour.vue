@@ -1,47 +1,81 @@
 <script setup lang="ts">
 // A tabbed tour: a pressed-in segmented control picks the screen, and the
 // copy changes with it. The visual is the default slot.
+//
+// It is a real tab set — arrow keys move between screens, one tab in the tab
+// order, the panel labelled by its tab — because a row of buttons that swaps
+// content is a tab set whether or not it says so.
 export type TourScreen = { id: string; label: string; title: string; body: string }
 
-withDefaults(defineProps<{ screens: TourScreen[]; active?: number }>(), { active: 0 })
+const props = withDefaults(defineProps<{ screens: TourScreen[]; active?: number }>(), { active: 0 })
 const emit = defineEmits<{ (e: 'update:active', v: number): void }>()
+const uid = useId()
+
+// Indexed by screen, so arrow keys can move focus to the tab they selected.
+const tabs: (HTMLButtonElement | null)[] = []
+
+function onKey(e: KeyboardEvent) {
+  const n = props.screens.length
+  if (!n) return
+  const to =
+    e.key === 'ArrowRight' ? (props.active + 1) % n
+    : e.key === 'ArrowLeft' ? (props.active - 1 + n) % n
+    : e.key === 'Home' ? 0
+    : e.key === 'End' ? n - 1
+    : -1
+  if (to < 0) return
+  e.preventDefault()
+  emit('update:active', to)
+  tabs[to]?.focus()
+}
 </script>
 
 <template>
-  <div class="tour">
-    <div class="tabs" role="tablist" aria-label="Screens">
+  <div class="ads-screen-tour">
+    <div class="ads-screen-tour__tabs" role="tablist" aria-label="Screens" @keydown="onKey">
       <button
         v-for="(s, i) in screens"
+        :id="`${uid}-tab-${s.id}`"
         :key="s.id"
+        :ref="(el) => (tabs[i] = el as HTMLButtonElement | null)"
+        type="button"
         role="tab"
+        class="ads-screen-tour__tab"
+        :class="{ 'is-active': i === active }"
         :aria-selected="i === active"
-        :class="{ on: i === active }"
+        :aria-controls="i === active ? `${uid}-panel-${s.id}` : undefined"
+        :tabindex="i === active ? 0 : -1"
         @click="emit('update:active', i)"
       >
         {{ s.label }}
       </button>
     </div>
 
-    <div class="stage">
-      <div class="copy">
+    <div
+      :id="`${uid}-panel-${screens[active]?.id}`"
+      class="ads-screen-tour__stage"
+      role="tabpanel"
+      :aria-labelledby="`${uid}-tab-${screens[active]?.id}`"
+    >
+      <div class="ads-screen-tour__copy">
         <h3 class="h3">{{ screens[active]?.title }}</h3>
         <p class="body">{{ screens[active]?.body }}</p>
       </div>
-      <div class="shot"><slot /></div>
+      <div class="ads-screen-tour__shot"><slot /></div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.tour {
+.ads-screen-tour {
   display: grid;
   gap: 40px;
   justify-items: center;
 }
 
-.tabs {
+.ads-screen-tour__tabs {
   display: inline-flex;
-  gap: 4px;
+  gap: var(--sp-1);
   padding: 6px;
   border-radius: var(--pill);
   background: var(--surface);
@@ -51,7 +85,7 @@ const emit = defineEmits<{ (e: 'update:active', v: number): void }>()
   scrollbar-width: none;
 }
 
-.tabs button {
+.ads-screen-tour__tab {
   border: 0;
   background: transparent;
   color: var(--subdued);
@@ -61,41 +95,44 @@ const emit = defineEmits<{ (e: 'update:active', v: number): void }>()
   border-radius: var(--pill);
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.2s var(--ease), background 0.2s var(--ease), box-shadow 0.3s var(--ease);
+  transition:
+    color var(--dur-control) var(--ease),
+    background var(--dur-control) var(--ease),
+    box-shadow var(--dur-control) var(--ease);
 }
 
-.tabs button:hover {
+.ads-screen-tour__tab:hover {
   color: var(--text);
 }
 
-.tabs button.on {
+.ads-screen-tour__tab.is-active {
   color: var(--accent-ink);
   background: var(--accent);
   box-shadow: var(--soft-raised-sm);
 }
 
-.stage {
+.ads-screen-tour__stage {
   width: 100%;
   display: grid;
   grid-template-columns: 300px 1fr;
-  gap: 48px;
+  gap: var(--sp-7);
   align-items: center;
 }
 
-.copy h3 {
-  margin-bottom: 12px;
+.ads-screen-tour__copy h3 {
+  margin-bottom: var(--sp-3);
 }
 
-.copy p {
+.ads-screen-tour__copy p {
   line-height: 1.65;
 }
 
 @media (max-width: 900px) {
-  .stage {
+  .ads-screen-tour__stage {
     grid-template-columns: 1fr;
     gap: 28px;
   }
-  .copy {
+  .ads-screen-tour__copy {
     text-align: center;
   }
 }

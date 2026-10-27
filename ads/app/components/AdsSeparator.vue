@@ -1,9 +1,10 @@
 <script setup lang="ts">
-// A horizontal rule — the whisper that separates rows or sections.
+// A horizontal rule — the whisper that separates rows or sections. One pixel
+// of `--line`, never a heavier rule: depth does the structural work here.
 </script>
 
 <template>
-  <hr class="ads-separator" role="separator" />
+  <hr class="ads-separator" />
 </template>
 
 <style scoped>
