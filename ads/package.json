@@ -1,0 +1,13 @@
+{
+  "name": "@artelier/ads",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ADS — the Artelier Design System UI kit. A Nuxt layer of tokens, a utility layer, section components and a dashboard, for scaffolding data-rich apps fast.",
+  "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/inter-tight": "^5.1.1",
+    "@fontsource-variable/jetbrains-mono": "^5.2.5",
+    "@fontsource-variable/martian-mono": "^5.3.0",
+    "nuxt": "^4.6.2"
+  }
+}

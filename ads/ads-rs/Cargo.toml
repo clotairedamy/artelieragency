@@ -1,0 +1,13 @@
+[package]
+name = "ads"
+version = "0.1.0"
+edition = "2021"
+description = "ADS — the Artelier Design System, as Dioxus components. Same CSS, same look."
+license = "UNLICENSED"
+
+[dependencies]
+dioxus = "=0.7.9"
+
+[lib]
+name = "ads"
+path = "src/lib.rs"
