@@ -70,13 +70,15 @@ const { kits, kit, sameIn } = useUiKit()
   margin: 0 20px;
 }
 
-:global(.ads-dash-shell.is-collapsed) .ui-kit-layout__rail-switch {
+/* Wholly inside :global(). Vue keeps only what is in the brackets, so
+   `:global(.x) .y` compiles to plain `.x` and hid the whole shell. */
+:global(.ads-dash-shell.is-collapsed .ui-kit-switch.ui-kit-layout__rail-switch) {
   grid-auto-flow: row;
   margin: 0 20px;
   width: 48px;
 }
 
-:global(.ads-dash-shell.is-collapsed) .ui-kit-layout__rail-switch .ui-kit-switch__label {
+:global(.ads-dash-shell.is-collapsed .ui-kit-layout__rail-switch .ui-kit-switch__label) {
   position: absolute;
   width: 1px;
   height: 1px;
