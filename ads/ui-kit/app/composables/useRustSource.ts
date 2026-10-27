@@ -1,6 +1,6 @@
 // Raw source of every Rust file in the kit (ads-rs/src), so the docs can show
 // the Dioxus components' source alongside the Vue ones.
-const raw = import.meta.glob('../../ads/ads-rs/src/**/*.rs', {
+const raw = import.meta.glob('../../../ads-rs/src/**/*.rs', {
   query: '?raw',
   import: 'default',
   eager: true,

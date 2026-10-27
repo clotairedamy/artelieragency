@@ -7,8 +7,9 @@ export default defineNuxtConfig({
   // Nuxt layer: its tokens, fonts, stylesheets, components and composables
   // all auto-import from there. The site never overrides a kit component —
   // the /ui-kit pages preview the kit's — it wraps one instead and
-  // passes its own copy (StudioFooter, StudioCta).
-  extends: ['./ads'],
+  // passes its own copy (StudioFooter, StudioCta). The kit's docs, under
+  // /ui-kit, are a second layer beside it so other sites can show them too.
+  extends: ['./ads', './ads/ui-kit'],
 
   // Only what the site adds on top of the kit.
   css: ['~/assets/css/main.css'],

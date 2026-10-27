@@ -1,6 +1,6 @@
 // Raw source of every component in the kit, so each docs page can show the
 // whole file behind the component it documents.
-const raw = import.meta.glob('../../ads/app/components/*.vue', {
+const raw = import.meta.glob('../../../app/components/*.vue', {
   query: '?raw',
   import: 'default',
   eager: true,
